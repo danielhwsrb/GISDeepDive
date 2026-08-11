@@ -33,7 +33,7 @@
     background-size: 4px 4px;
   }
 
-  .app{max-width:1200px; margin:0 auto; padding:26px 18px 60px;}
+  .app{max-width:1200px; margin:0 auto; padding:96px 18px 60px;}
 
   header{margin-bottom:22px;}
   .flag{
@@ -50,11 +50,15 @@
     transform:skewX(-3deg);
   }
 
+  .board-bar{
+    position:fixed; top:0; left:0; right:0; z-index:600;
+    background:var(--ink); padding:10px 18px;
+    box-shadow: 0 6px 0 rgba(0,0,0,.35);
+  }
   .board{
     display:grid; grid-template-columns:repeat(3,1fr); gap:2px;
     background:var(--line); border:3px solid var(--line);
-    position:sticky; top:0; z-index:600;
-    box-shadow: 0 6px 0 rgba(0,0,0,.35);
+    max-width:1164px; margin:0 auto;
   }
   .board .cell{background:var(--paper); color:var(--ink); padding:12px 14px;}
   .board .cell .label{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:700;}
@@ -236,25 +240,27 @@
 </style>
 </head>
 <body>
+<div class="board-bar" id="boardBar">
+  <div class="board">
+    <div class="cell net">
+      <div class="label">Tour fund</div>
+      <div class="val" id="budgetReadout">$0</div>
+    </div>
+    <div class="cell spent">
+      <div class="label">Spent on travel</div>
+      <div class="val" id="spentReadout">$0</div>
+    </div>
+    <div class="cell earned">
+      <div class="label">Earned from shows</div>
+      <div class="val" id="earnedReadout">$0</div>
+    </div>
+  </div>
+</div>
 <div class="app">
 
   <header>
     <span class="flag">book your own damn tour</span>
     <h1>Route the Tour</h1>
-    <div class="board">
-      <div class="cell net">
-        <div class="label">Tour fund</div>
-        <div class="val" id="budgetReadout">$0</div>
-      </div>
-      <div class="cell spent">
-        <div class="label">Spent on travel</div>
-        <div class="val" id="spentReadout">$0</div>
-      </div>
-      <div class="cell earned">
-        <div class="label">Earned from shows</div>
-        <div class="val" id="earnedReadout">$0</div>
-      </div>
-    </div>
   </header>
 
   <div class="setup" id="setupPanel">
