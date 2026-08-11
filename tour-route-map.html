@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   :root{
     --ink:#0D0D0D;
@@ -28,14 +29,12 @@
 
   body{
     background-color:var(--ink);
-    background-image:
-      radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
     background-size: 4px 4px;
   }
 
   .app{max-width:1200px; margin:0 auto; padding:26px 18px 60px;}
 
-  /* ---- Header ---- */
   header{margin-bottom:22px;}
   .flag{
     display:inline-block; background:var(--hot); color:var(--ink);
@@ -63,7 +62,6 @@
   .board .cell.spent .val{color:#b3121f;}
   .board .cell.earned .val{color:#1a7a34;}
 
-  /* ---- Setup panel ---- */
   .setup{
     background:var(--paper); color:var(--ink); border:3px solid var(--line);
     padding:22px; margin:22px 0; display:flex; gap:22px; flex-wrap:wrap; align-items:flex-end;
@@ -87,8 +85,9 @@
   .btn-primary{background:var(--hot); color:var(--ink);}
   .btn-acid{background:var(--acid); color:var(--ink);}
   .btn-ghost{background:var(--paper); color:var(--ink);}
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn:disabled:hover{transform:none; box-shadow:none;}
 
-  /* ---- Layout ---- */
   .stage{display:grid; grid-template-columns:1.6fr 1fr; gap:20px; margin-top:20px;}
   @media (max-width:880px){ .stage{grid-template-columns:1fr;} }
 
@@ -120,7 +119,6 @@
     background:var(--paper); padding:2px 7px; border:2px solid var(--ink); white-space:nowrap;
   }
 
-  /* ---- Side column ---- */
   .side{display:flex; flex-direction:column; gap:16px;}
   .panel{background:var(--paper); color:var(--ink); border:3px solid var(--line); padding:18px;}
   .panel h2{
@@ -150,7 +148,6 @@
   .end-msg{font-size:13px; color:var(--muted); line-height:1.7; font-weight:600;}
   .end-msg strong{color:var(--ink);}
 
-  /* ---- Ticket log ---- */
   #ticketLog{ max-height:340px; overflow-y:auto; }
   .stub{
     border-top:2px dashed var(--line); padding:10px 2px; margin-top:8px;
@@ -169,7 +166,43 @@
   .empty-log{color:var(--muted); font-size:12px; font-weight:600;}
 
   .export-btn{width:100%; margin-top:14px;}
-  .export-btn:disabled{opacity:.4; cursor:not-allowed;}
+
+  /* ---- Shirt panel ---- */
+  #shirtPanel .shirt-note{font-size:11px; color:var(--muted); font-weight:600; margin:0 0 14px; line-height:1.5;}
+  .shirt-wrap{
+    background:var(--paper-dim); padding:30px 20px; display:flex; justify-content:center;
+  }
+  .tee{
+    position:relative; width:280px; height:340px;
+    clip-path: polygon(33% 0%, 42% 8%, 50% 4%, 58% 8%, 67% 0%, 85% 12%, 100% 30%, 85% 42%, 75% 32%, 75% 100%, 25% 100%, 25% 32%, 15% 42%, 0% 30%, 15% 12%);
+    background: var(--ink);
+  }
+  .tee::before{
+    content:''; position:absolute; inset:-7px;
+    clip-path: polygon(33% 0%, 42% 8%, 50% 4%, 58% 8%, 67% 0%, 85% 12%, 100% 30%, 85% 42%, 75% 32%, 75% 100%, 25% 100%, 25% 32%, 15% 42%, 0% 30%, 15% 12%);
+    background: var(--hot); z-index:-1;
+  }
+  .tee-print{
+    position:absolute; top:22%; left:26%; right:26%; bottom:8%;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    text-align:center; overflow:hidden;
+  }
+  .tee-heading{
+    font-family:'Anton',sans-serif; color:var(--acid); font-size:19px; letter-spacing:.03em;
+    line-height:.95; margin-bottom:8px;
+  }
+  .tee-rule{width:70%; height:2px; background:var(--paper); margin-bottom:8px; opacity:.6;}
+  .tee-dates{width:100%;}
+  .tee-date-line{
+    font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--paper);
+    font-size:8.5px; display:flex; justify-content:space-between; gap:6px;
+    padding:1.5px 0; text-transform:uppercase; letter-spacing:.02em;
+  }
+  .tee-date-line span:last-child{color:var(--acid); flex-shrink:0;}
+  .tee-tagline{
+    font-family:'Permanent Marker',cursive; color:var(--hot); font-size:11px; margin-top:10px; transform:rotate(-2deg);
+  }
+  .shirt-download-btn{width:100%; margin-top:16px;}
 
   .hidden{display:none !important;}
 </style>
@@ -221,6 +254,22 @@
       <div class="panel" id="optionsPanel">
         <h2>Next stop</h2>
         <div id="optionsList"></div>
+      </div>
+
+      <div class="panel" id="shirtPanel">
+        <h2>Tour shirt</h2>
+        <p class="shirt-note">Your tour dates, printed up. Grab the PNG once the route's locked in.</p>
+        <div class="shirt-wrap" id="shirtWrap">
+          <div class="tee" id="tee">
+            <div class="tee-print">
+              <div class="tee-heading">2026 TOUR</div>
+              <div class="tee-rule"></div>
+              <div class="tee-dates" id="teeDates"></div>
+              <div class="tee-tagline">no sleep till the next city</div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-acid shirt-download-btn" id="shirtDownloadBtn">Download shirt design (PNG)</button>
       </div>
 
       <div class="panel">
@@ -289,6 +338,8 @@ const PAYOUTS = {
 };
 
 const START_CITY = "Seattle, WA";
+const TOUR_START = new Date(2026, 8, 1); // September 1, 2026
+const LONG_HAUL_MILES = 400; // drives longer than this get an extra day off before the next show
 /* ------------------------------------------------------------- */
 
 let budget = 15000;
@@ -298,6 +349,7 @@ let visited = [START_CITY];
 let totalSpent = 0;
 let totalEarned = 0;
 let legLog = [];
+let currentShowDate = null;
 let map, markersLayer;
 
 function haversineMiles(a, b){
@@ -312,6 +364,15 @@ function haversineMiles(a, b){
 
 function fmtMoney(n){
   return (n < 0 ? "-$" : "$") + Math.abs(Math.round(n)).toLocaleString();
+}
+
+function addDays(date, days){
+  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+function formatShowDate(date){
+  const s = date.toLocaleDateString("en-US", { month: "short", day: "2-digit" }).toUpperCase();
+  return date.getFullYear() === TOUR_START.getFullYear() ? s : s + " '" + String(date.getFullYear()).slice(-2);
 }
 
 function initMap(){
@@ -351,16 +412,34 @@ function renderBoard(){
 function renderStatus(){
   document.getElementById('currentCityName').textContent = currentCity;
   document.getElementById('legCount').textContent =
-    `Leg ${visited.length - 1} \u00b7 ${visited.length} show${visited.length===1?'':'s'} played`;
+    "Leg " + (visited.length - 1) + " \u00b7 " + visited.length + (visited.length === 1 ? " show played" : " shows played");
+}
+
+function hideShirt(){
+  document.getElementById('shirtPanel').classList.add('hidden');
+}
+
+function showShirt(){
+  const list = document.getElementById('teeDates');
+  list.innerHTML = '';
+  legLog.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'tee-date-line';
+    row.innerHTML = '<span>' + e.to.split(',')[0] + '</span><span>' + formatShowDate(e.date) + '</span>';
+    list.appendChild(row);
+  });
+  document.getElementById('shirtPanel').classList.remove('hidden');
 }
 
 function renderOptions(){
+  hideShirt();
   const list = document.getElementById('optionsList');
   list.innerHTML = '';
   const neighbors = (NETWORK[currentCity] || []).filter(n => !visited.includes(n));
 
   if (neighbors.length === 0){
-    list.innerHTML = `<p class="end-msg">No unplayed cities left on the route from <strong>${currentCity}</strong>.<br><br>Tour's over &mdash; ${visited.length} shows, ${fmtMoney(budget)} in the fund.</p>`;
+    list.innerHTML = "<p class=\"end-msg\">No unplayed cities left on the route from <strong>" + currentCity + "</strong>.<br><br>Tour's over &mdash; " + visited.length + " shows, " + fmtMoney(budget) + " in the fund.</p>";
+    showShirt();
     return;
   }
 
@@ -375,16 +454,11 @@ function renderOptions(){
     const btn = document.createElement('button');
     btn.className = 'option';
     btn.disabled = !affordable;
-    btn.innerHTML = `
-      <span>
-        <span class="name">${name}</span><br>
-        <span class="meta">${Math.round(miles).toLocaleString()} mi${!affordable ? '<br><span class="tag">Can&rsquo;t afford the drive</span>' : ''}</span>
-      </span>
-      <span class="figs">
-        <div class="cost">-${fmtMoney(cost)}</div>
-        <div class="pay">+${fmtMoney(payout)}</div>
-      </span>
-    `;
+    btn.innerHTML =
+      '<span><span class="name">' + name + '</span><br>' +
+      '<span class="meta">' + Math.round(miles).toLocaleString() + ' mi' +
+      (!affordable ? '<br><span class="tag">Can&rsquo;t afford the drive</span>' : '') + '</span></span>' +
+      '<span class="figs"><div class="cost">-' + fmtMoney(cost) + '</div><div class="pay">+' + fmtMoney(payout) + '</div></span>';
     btn.addEventListener('click', () => selectCity(name, miles, cost, payout));
     list.appendChild(btn);
   });
@@ -393,8 +467,9 @@ function renderOptions(){
     const p = document.createElement('p');
     p.className = 'end-msg';
     p.style.marginTop = '12px';
-    p.innerHTML = `Every remaining drive from <strong>${currentCity}</strong> costs more than what's in the fund.<br><br>Tour's over &mdash; ${visited.length} shows, ${fmtMoney(budget)} in the fund.`;
+    p.innerHTML = "Every remaining drive from <strong>" + currentCity + "</strong> costs more than what's in the fund.<br><br>Tour's over &mdash; " + visited.length + " shows, " + fmtMoney(budget) + " in the fund.";
     list.appendChild(p);
+    showShirt();
   }
 }
 
@@ -409,15 +484,14 @@ function addTicketStub(entry){
   const netSign = entry.net >= 0 ? '+' : '-';
 
   const routeLine = entry.from
-    ? `${entry.from.split(',')[0]} &rarr; ${entry.to.split(',')[0]}`
-    : `${entry.to.split(',')[0]} (opener)`;
+    ? entry.from.split(',')[0] + ' &rarr; ' + entry.to.split(',')[0]
+    : entry.to.split(',')[0] + ' (opener)';
 
-  stub.innerHTML = `
-    <div class="route"><span>${routeLine}</span><span>Leg ${entry.leg}</span></div>
-    ${entry.miles ? `<div class="row"><span>${Math.round(entry.miles).toLocaleString()} mi drive</span><span>-${fmtMoney(entry.travelCost)}</span></div>` : ''}
-    <div class="row"><span>Show payout</span><span>+${fmtMoney(entry.payout)}</span></div>
-    <span class="net ${netClass}">${netSign}${fmtMoney(Math.abs(entry.net))} net</span>
-  `;
+  stub.innerHTML =
+    '<div class="route"><span>' + routeLine + '</span><span>' + formatShowDate(entry.date) + '</span></div>' +
+    (entry.miles ? '<div class="row"><span>' + Math.round(entry.miles).toLocaleString() + ' mi drive</span><span>-' + fmtMoney(entry.travelCost) + '</span></div>' : '') +
+    '<div class="row"><span>Show payout</span><span>+' + fmtMoney(entry.payout) + '</span></div>' +
+    '<span class="net ' + netClass + '">' + netSign + fmtMoney(Math.abs(entry.net)) + ' net</span>';
   log.prepend(stub);
 }
 
@@ -429,9 +503,13 @@ function selectCity(name, miles, travelCost, payout){
   totalSpent += travelCost;
   totalEarned += payout;
 
+  const dayGap = miles > LONG_HAUL_MILES ? 2 : 1;
+  currentShowDate = addDays(currentShowDate, dayGap);
+
   const entry = {
     leg: visited.length, from: currentCity, to: name,
-    miles, travelCost, payout, net: payout - travelCost, runningBudget: budget
+    miles, travelCost, payout, net: payout - travelCost,
+    runningBudget: budget, date: new Date(currentShowDate.getTime())
   };
   legLog.push(entry);
   addTicketStub(entry);
@@ -449,15 +527,15 @@ function selectCity(name, miles, travelCost, payout){
 }
 
 function exportCSV(){
-  const rows = [["Leg","From","To","Miles","Travel Cost","Show Payout","Net This Leg","Running Fund"]];
+  const rows = [["Leg","Date","From","To","Miles","Travel Cost","Show Payout","Net This Leg","Running Fund"]];
   legLog.forEach(e => {
     rows.push([
-      e.leg, e.from || "", e.to, e.miles ? Math.round(e.miles) : 0,
+      e.leg, formatShowDate(e.date), e.from || "", e.to, e.miles ? Math.round(e.miles) : 0,
       e.travelCost ? Math.round(e.travelCost) : 0, Math.round(e.payout),
       Math.round(e.net), Math.round(e.runningBudget)
     ]);
   });
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -466,17 +544,28 @@ function exportCSV(){
   URL.revokeObjectURL(url);
 }
 
+function downloadShirt(){
+  const target = document.getElementById('shirtWrap');
+  html2canvas(target, { backgroundColor: null, scale: 3 }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = 'tour-shirt-design.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+}
+
 function startTour(){
   budget = parseFloat(document.getElementById('startBudget').value) || 0;
   pricePerMile = parseFloat(document.getElementById('pricePerMile').value) || 0;
   currentCity = START_CITY;
   visited = [START_CITY];
   totalSpent = 0; totalEarned = 0; legLog = [];
+  currentShowDate = new Date(TOUR_START.getTime());
 
   const openerPayout = PAYOUTS[START_CITY] || 0;
   budget += openerPayout;
   totalEarned += openerPayout;
-  const entry = { leg: 0, from: null, to: START_CITY, miles: 0, travelCost: 0, payout: openerPayout, net: openerPayout, runningBudget: budget };
+  const entry = { leg: 0, from: null, to: START_CITY, miles: 0, travelCost: 0, payout: openerPayout, net: openerPayout, runningBudget: budget, date: new Date(currentShowDate.getTime()) };
   legLog.push(entry);
 
   document.getElementById('ticketLog').innerHTML = '';
@@ -503,6 +592,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 });
 
 document.getElementById('exportBtn').addEventListener('click', exportCSV);
+document.getElementById('shirtDownloadBtn').addEventListener('click', downloadShirt);
 </script>
 </body>
 </html>
