@@ -245,6 +245,8 @@
     <div class="map-wrap"><div id="map"></div></div>
 
     <div class="side">
+      <button class="btn btn-ghost" id="toggleShirtBtn" style="width:100%;">View tour shirt</button>
+
       <div class="panel">
         <h2>Now playing</h2>
         <p class="current-city" id="currentCityName">Seattle, WA</p>
@@ -256,7 +258,7 @@
         <div id="optionsList"></div>
       </div>
 
-      <div class="panel" id="shirtPanel">
+      <div class="panel hidden" id="shirtPanel">
         <h2>Tour shirt</h2>
         <p class="shirt-note">Your tour dates, printed up. Grab the PNG once the route's locked in.</p>
         <div class="shirt-wrap" id="shirtWrap">
@@ -415,11 +417,7 @@ function renderStatus(){
     "Leg " + (visited.length - 1) + " \u00b7 " + visited.length + (visited.length === 1 ? " show played" : " shows played");
 }
 
-function hideShirt(){
-  document.getElementById('shirtPanel').classList.add('hidden');
-}
-
-function showShirt(){
+function refreshShirtContent(){
   const list = document.getElementById('teeDates');
   list.innerHTML = '';
   legLog.forEach(e => {
@@ -428,11 +426,14 @@ function showShirt(){
     row.innerHTML = '<span>' + e.to.split(',')[0] + '</span><span>' + formatShowDate(e.date) + '</span>';
     list.appendChild(row);
   });
+}
+
+function showShirt(){
+  refreshShirtContent();
   document.getElementById('shirtPanel').classList.remove('hidden');
 }
 
 function renderOptions(){
-  hideShirt();
   const list = document.getElementById('optionsList');
   list.innerHTML = '';
   const neighbors = (NETWORK[currentCity] || []).filter(n => !visited.includes(n));
@@ -509,7 +510,7 @@ function selectCity(name, miles, travelCost, payout){
   const entry = {
     leg: visited.length, from: currentCity, to: name,
     miles, travelCost, payout, net: payout - travelCost,
-    runningBudget: budget, date: new Date(currentShowDate.getTime())
+    runningBudget: budget, date: new Date(currentShowDate.getTime()), dayGap
   };
   legLog.push(entry);
   addTicketStub(entry);
@@ -523,17 +524,28 @@ function selectCity(name, miles, travelCost, payout){
   renderBoard();
   renderStatus();
   renderOptions();
+  refreshShirtContent();
   document.getElementById('exportBtn').disabled = false;
 }
 
 function exportCSV(){
-  const rows = [["Leg","Date","From","To","Miles","Travel Cost","Show Payout","Net This Leg","Running Fund"]];
+  const rows = [["Leg","Date","Type","From","To","Miles","Travel Cost","Show Payout","Net","Running Fund"]];
   legLog.forEach(e => {
-    rows.push([
-      e.leg, formatShowDate(e.date), e.from || "", e.to, e.miles ? Math.round(e.miles) : 0,
-      e.travelCost ? Math.round(e.travelCost) : 0, Math.round(e.payout),
-      Math.round(e.net), Math.round(e.runningBudget)
-    ]);
+    if (e.from === null){
+      // opening show, no travel involved
+      rows.push([e.leg, formatShowDate(e.date), "Show", "", e.to, 0, 0, Math.round(e.payout), Math.round(e.net), Math.round(e.runningBudget)]);
+      return;
+    }
+    if (e.dayGap === 2){
+      // separate travel/off day the day before the show, then the show itself
+      const travelDate = addDays(e.date, -1);
+      const fundBeforePayout = Math.round(e.runningBudget - e.payout);
+      rows.push([e.leg, formatShowDate(travelDate), "Travel Day", e.from, e.to, Math.round(e.miles), Math.round(e.travelCost), 0, -Math.round(e.travelCost), fundBeforePayout]);
+      rows.push([e.leg, formatShowDate(e.date), "Show", "", e.to, 0, 0, Math.round(e.payout), Math.round(e.payout), Math.round(e.runningBudget)]);
+    } else {
+      // drive and show happen the same day, back-to-back
+      rows.push([e.leg, formatShowDate(e.date), "Show", e.from, e.to, Math.round(e.miles), Math.round(e.travelCost), Math.round(e.payout), Math.round(e.net), Math.round(e.runningBudget)]);
+    }
   });
   const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -575,7 +587,13 @@ function startTour(){
   renderBoard();
   renderStatus();
   renderOptions();
+  refreshShirtContent();
 }
+
+document.getElementById('toggleShirtBtn').addEventListener('click', () => {
+  refreshShirtContent();
+  document.getElementById('shirtPanel').classList.toggle('hidden');
+});
 
 document.getElementById('startBtn').addEventListener('click', () => {
   document.getElementById('setupPanel').classList.add('hidden');
