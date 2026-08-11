@@ -6,96 +6,107 @@
 <title>Route the Tour</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   :root{
-    --void:#0B0E1A;
-    --panel:#12172A;
-    --panel-edge:#232B47;
-    --ink:#F2F0E9;
-    --muted:#8890A6;
-    --amber:#FFC857;
-    --violet:#7C5CFF;
-    --danger:#FF5D6C;
-    --ok:#4EE0A0;
+    --ink:#0D0D0D;
+    --paper:#EDE9DD;
+    --paper-dim:#DAD5C4;
+    --hot:#FF2360;
+    --acid:#D6FF3B;
+    --blue:#3AA6FF;
+    --muted:#8a8676;
+    --line:#0D0D0D;
   }
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;background:var(--void);color:var(--ink);
-    font-family:'Inter',system-ui,sans-serif; -webkit-font-smoothing:antialiased;}
-  ::selection{background:var(--violet);color:white;}
+  html,body{margin:0;padding:0;background:var(--ink);color:var(--paper);
+    font-family:'JetBrains Mono',monospace; -webkit-font-smoothing:antialiased;}
+  ::selection{background:var(--hot); color:var(--ink);}
+  a:focus-visible, button:focus-visible{outline:3px solid var(--acid); outline-offset:2px;}
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
 
-  a:focus-visible, button:focus-visible{outline:2px solid var(--amber); outline-offset:2px;}
-
-  @media (prefers-reduced-motion: reduce){
-    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  body{
+    background-color:var(--ink);
+    background-image:
+      radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+    background-size: 4px 4px;
   }
 
-  .app{max-width:1180px;margin:0 auto;padding:20px 20px 48px;}
+  .app{max-width:1200px; margin:0 auto; padding:26px 18px 60px;}
 
-  /* ---- Header / departure board ---- */
-  header{
-    display:flex; align-items:flex-end; justify-content:space-between;
-    gap:20px; flex-wrap:wrap;
-    border-bottom:1px solid var(--panel-edge); padding-bottom:16px; margin-bottom:20px;
-  }
-  .title-block .eyebrow{
-    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.18em;
-    text-transform:uppercase; color:var(--amber); margin:0 0 6px;
+  /* ---- Header ---- */
+  header{margin-bottom:22px;}
+  .flag{
+    display:inline-block; background:var(--hot); color:var(--ink);
+    padding:6px 14px; transform:rotate(-1.4deg); font-family:'Permanent Marker',cursive;
+    font-size:13px; letter-spacing:.03em; margin-bottom:10px;
   }
   h1{
-    font-family:'Bebas Neue',sans-serif; font-weight:400; letter-spacing:.02em;
-    font-size:clamp(34px,5vw,54px); line-height:.9; margin:0; color:var(--ink);
+    font-family:'Anton',sans-serif; font-weight:400; text-transform:uppercase;
+    font-size:clamp(42px,7vw,78px); line-height:.86; margin:0 0 18px; letter-spacing:.01em;
+    color:var(--paper);
+    -webkit-text-stroke: 2px var(--ink);
+    text-shadow: 4px 4px 0 var(--ink), 7px 7px 0 var(--hot);
+    transform:skewX(-3deg);
   }
+
   .board{
-    font-family:'JetBrains Mono',monospace;
-    background:var(--panel); border:1px solid var(--panel-edge); border-radius:6px;
-    padding:10px 18px; min-width:220px;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:2px;
+    background:var(--line); border:3px solid var(--line);
   }
-  .board .row{display:flex; justify-content:space-between; gap:16px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;}
-  .board .amt{font-size:22px; color:var(--ok); font-weight:700; letter-spacing:.02em; font-variant-numeric:tabular-nums;}
-  .board .amt.negative{color:var(--danger);}
-  .board .divider{height:1px; background:var(--panel-edge); margin:8px 0;}
+  .board .cell{background:var(--paper); color:var(--ink); padding:12px 14px;}
+  .board .cell .label{font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:700;}
+  .board .cell .val{font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; margin-top:2px;}
+  .board .cell.net .val{color:#1a7a34;}
+  .board .cell.net .val.negative{color:var(--hot);}
+  .board .cell.spent .val{color:#b3121f;}
+  .board .cell.earned .val{color:#1a7a34;}
 
   /* ---- Setup panel ---- */
   .setup{
-    background:var(--panel); border:1px solid var(--panel-edge); border-radius:10px;
-    padding:22px; margin-bottom:20px; display:flex; gap:24px; flex-wrap:wrap; align-items:flex-end;
+    background:var(--paper); color:var(--ink); border:3px solid var(--line);
+    padding:22px; margin:22px 0; display:flex; gap:22px; flex-wrap:wrap; align-items:flex-end;
+    transform:rotate(-0.4deg);
+    box-shadow: 8px 8px 0 var(--line);
   }
   .field{display:flex; flex-direction:column; gap:6px;}
-  .field label{font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase;}
+  .field label{font-size:11px; letter-spacing:.1em; color:var(--muted); text-transform:uppercase; font-weight:700;}
   .field input{
-    background:var(--void); border:1px solid var(--panel-edge); border-radius:6px;
-    color:var(--ink); font-family:'JetBrains Mono',monospace; font-size:16px; padding:9px 12px; width:150px;
+    background:#fff; border:2px solid var(--line); border-radius:0;
+    color:var(--ink); font-family:'JetBrains Mono',monospace; font-weight:700; font-size:16px; padding:9px 12px; width:150px;
   }
-  .field input:focus{border-color:var(--amber); outline:none;}
+  .field input:focus{border-color:var(--hot); outline:none;}
   .btn{
-    font-family:'JetBrains Mono',monospace; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
-    font-size:13px; padding:11px 22px; border-radius:6px; border:1px solid transparent; cursor:pointer;
-    transition:transform .12s ease, background .12s ease;
+    font-family:'Anton',sans-serif; font-weight:400; letter-spacing:.04em; text-transform:uppercase;
+    font-size:16px; padding:12px 24px; border-radius:0; border:3px solid var(--line); cursor:pointer;
+    transition:transform .1s ease;
   }
-  .btn:hover{transform:translateY(-1px);}
-  .btn-primary{background:var(--amber); color:#221600;}
-  .btn-primary:hover{background:#ffd67e;}
-  .btn-ghost{background:transparent; color:var(--muted); border-color:var(--panel-edge);}
-  .btn-ghost:hover{color:var(--ink); border-color:var(--muted);}
+  .btn:hover{transform:translate(-2px,-2px); box-shadow:4px 4px 0 var(--line);}
+  .btn:active{transform:translate(0,0); box-shadow:none;}
+  .btn-primary{background:var(--hot); color:var(--ink);}
+  .btn-acid{background:var(--acid); color:var(--ink);}
+  .btn-ghost{background:var(--paper); color:var(--ink);}
 
   /* ---- Layout ---- */
-  .stage{display:grid; grid-template-columns:1.6fr 1fr; gap:20px;}
-  @media (max-width:860px){ .stage{grid-template-columns:1fr;} }
+  .stage{display:grid; grid-template-columns:1.6fr 1fr; gap:20px; margin-top:20px;}
+  @media (max-width:880px){ .stage{grid-template-columns:1fr;} }
 
-  #map{
-    width:100%; height:460px; border-radius:10px; border:1px solid var(--panel-edge);
-    background:#0e1220;
+  .map-wrap{position:relative; border:4px solid var(--line);}
+  .map-wrap::before, .map-wrap::after{
+    content:''; position:absolute; width:56px; height:22px; background:rgba(230,220,180,.85);
+    box-shadow:0 1px 2px rgba(0,0,0,.4); z-index:500;
   }
-  .leaflet-container{background:#0e1220 !important;}
+  .map-wrap::before{ top:-11px; left:24px; transform:rotate(-6deg); }
+  .map-wrap::after{ top:-11px; right:24px; transform:rotate(5deg); }
+  #map{ width:100%; height:460px; background:#111; }
+  .leaflet-container{background:#111 !important;}
   .leaflet-control-attribution{
-    background:rgba(11,14,26,.75) !important; color:var(--muted) !important;
+    background:rgba(13,13,13,.75) !important; color:var(--muted) !important;
     font-family:'JetBrains Mono',monospace; font-size:10px !important;
   }
   .leaflet-control-attribution a{color:var(--muted) !important;}
 
-  /* dynamic route line draw-on animation */
   .route-path{
     stroke-dasharray: 10 8;
     animation: dash-flow 1.1s linear forwards, dash-scroll 22s linear infinite 1.1s;
@@ -103,55 +114,62 @@
   @keyframes dash-flow{ from{ stroke-dashoffset: 900; } to{ stroke-dashoffset: 0; } }
   @keyframes dash-scroll{ to{ stroke-dashoffset:-1000; } }
 
-  .city-dot{
-    background:var(--amber); border:2px solid #0B0E1A; border-radius:50%;
-  }
+  .city-dot{ background:var(--acid); border:3px solid var(--ink); border-radius:50%; }
   .city-label{
-    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink);
-    background:rgba(11,14,26,.82); padding:2px 6px; border-radius:4px; border:1px solid var(--panel-edge);
-    white-space:nowrap;
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:11px; color:var(--ink);
+    background:var(--paper); padding:2px 7px; border:2px solid var(--ink); white-space:nowrap;
   }
 
-  /* ---- Side column: current status + options + ledger ---- */
+  /* ---- Side column ---- */
   .side{display:flex; flex-direction:column; gap:16px;}
-
-  .panel{background:var(--panel); border:1px solid var(--panel-edge); border-radius:10px; padding:18px;}
+  .panel{background:var(--paper); color:var(--ink); border:3px solid var(--line); padding:18px;}
   .panel h2{
-    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase;
-    color:var(--muted); margin:0 0 12px;
+    font-family:'Anton',sans-serif; font-weight:400; font-size:18px; letter-spacing:.03em; text-transform:uppercase;
+    margin:0 0 12px; border-bottom:3px solid var(--line); padding-bottom:8px;
   }
-  .current-city{font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--amber); margin:0 0 4px;}
-  .current-sub{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin:0;}
+
+  .current-city{font-family:'Anton',sans-serif; font-size:30px; text-transform:uppercase; color:var(--ink); margin:0 0 2px;}
+  .current-sub{font-size:11px; color:var(--muted); margin:0; text-transform:uppercase; letter-spacing:.06em; font-weight:700;}
 
   .option{
-    display:flex; justify-content:space-between; align-items:center; gap:10px;
-    width:100%; text-align:left; background:var(--void); border:1px solid var(--panel-edge);
-    border-radius:8px; padding:12px 14px; margin-bottom:10px; cursor:pointer; color:var(--ink);
-    font-family:'Inter',sans-serif; transition:border-color .12s ease, transform .12s ease;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+    width:100%; text-align:left; background:#fff; border:2px solid var(--line);
+    padding:12px 14px; margin-bottom:10px; cursor:pointer; color:var(--ink);
+    font-family:'JetBrains Mono',monospace; transition:transform .1s ease;
   }
-  .option:hover:not(:disabled){border-color:var(--violet); transform:translateX(2px);}
+  .option:hover:not(:disabled){transform:translate(-2px,-2px); box-shadow:3px 3px 0 var(--line); background:#fffdf5;}
   .option:last-child{margin-bottom:0;}
-  .option .name{font-weight:600; font-size:15px;}
-  .option .meta{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); margin-top:2px;}
-  .option .cost{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; color:var(--ok);}
-  .option:disabled{opacity:.4; cursor:not-allowed;}
-  .option:disabled .cost{color:var(--danger);}
-  .option .tag{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--danger); text-transform:uppercase; letter-spacing:.06em;}
+  .option .name{font-weight:800; font-size:15px; text-transform:uppercase;}
+  .option .meta{font-size:11px; color:var(--muted); margin-top:3px; line-height:1.5;}
+  .option .figs{text-align:right; flex-shrink:0;}
+  .option .cost{font-weight:800; font-size:14px; color:#b3121f;}
+  .option .pay{font-weight:800; font-size:14px; color:#1a7a34;}
+  .option:disabled{opacity:.42; cursor:not-allowed;}
+  .option .tag{font-size:10px; color:#b3121f; text-transform:uppercase; letter-spacing:.06em; font-weight:800;}
 
-  .end-msg{font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--muted); line-height:1.6;}
+  .end-msg{font-size:13px; color:var(--muted); line-height:1.7; font-weight:600;}
   .end-msg strong{color:var(--ink);}
 
   /* ---- Ticket log ---- */
+  #ticketLog{ max-height:340px; overflow-y:auto; }
   .stub{
-    border:1px dashed var(--panel-edge); border-radius:8px; padding:10px 12px; margin-bottom:8px;
-    font-family:'JetBrains Mono',monospace; font-size:12px; display:flex; justify-content:space-between; gap:10px;
-    animation: stub-in .35s ease;
+    border-top:2px dashed var(--line); padding:10px 2px; margin-top:8px;
+    font-size:11.5px; animation: stub-in .3s ease;
   }
+  .stub:first-child{border-top:none; margin-top:0; padding-top:0;}
   @keyframes stub-in{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:none;} }
-  .stub .route{color:var(--ink);}
-  .stub .miles{color:var(--muted);}
-  .stub .price{color:var(--amber); font-weight:700;}
-  .empty-log{color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12px;}
+  .stub .route{font-weight:800; text-transform:uppercase; display:flex; justify-content:space-between;}
+  .stub .row{display:flex; justify-content:space-between; color:var(--muted); margin-top:2px;}
+  .stub .net{
+    display:inline-block; font-family:'Permanent Marker',cursive; font-size:15px;
+    margin-top:5px; padding:2px 8px; transform:rotate(-2deg);
+  }
+  .stub .net.pos{color:#1a7a34; border:2px solid #1a7a34;}
+  .stub .net.neg{color:var(--hot); border:2px solid var(--hot);}
+  .empty-log{color:var(--muted); font-size:12px; font-weight:600;}
+
+  .export-btn{width:100%; margin-top:14px;}
+  .export-btn:disabled{opacity:.4; cursor:not-allowed;}
 
   .hidden{display:none !important;}
 </style>
@@ -160,48 +178,55 @@
 <div class="app">
 
   <header>
-    <div class="title-block">
-      <p class="eyebrow">WSRB GIS PUNK ROCK &mdash; Interactive Tour Planner</p>
-      <h1>Route the Tour</h1>
-    </div>
+    <span class="flag">book your own damn tour</span>
+    <h1>Route the Tour</h1>
     <div class="board">
-      <div class="row"><span>Miles logged</span><span id="milesReadout">0</span></div>
-      <div class="divider"></div>
-      <div class="row"><span>Remaining budget</span></div>
-      <div class="amt" id="budgetReadout">$0</div>
+      <div class="cell net">
+        <div class="label">Tour fund</div>
+        <div class="val" id="budgetReadout">$0</div>
+      </div>
+      <div class="cell spent">
+        <div class="label">Spent on travel</div>
+        <div class="val" id="spentReadout">$0</div>
+      </div>
+      <div class="cell earned">
+        <div class="label">Earned from shows</div>
+        <div class="val" id="earnedReadout">$0</div>
+      </div>
     </div>
   </header>
 
   <div class="setup" id="setupPanel">
     <div class="field">
-      <label for="startBudget">Starting budget ($)</label>
-      <input type="number" id="startBudget" value="20000" min="0" step="500">
+      <label for="startBudget">Starting fund ($)</label>
+      <input type="number" id="startBudget" value="15000" min="0" step="500">
     </div>
     <div class="field">
       <label for="pricePerMile">Price per mile ($)</label>
       <input type="number" id="pricePerMile" value="5" min="0" step="0.5">
     </div>
-    <button class="btn btn-primary" id="startBtn">Start in Seattle</button>
+    <button class="btn btn-primary" id="startBtn">Kick off the tour</button>
   </div>
 
   <div class="stage hidden" id="stage">
-    <div id="map"></div>
+    <div class="map-wrap"><div id="map"></div></div>
 
     <div class="side">
       <div class="panel">
-        <h2>Current city</h2>
+        <h2>Now playing</h2>
         <p class="current-city" id="currentCityName">Seattle, WA</p>
         <p class="current-sub" id="legCount">Leg 0 &middot; 0 stops so far</p>
       </div>
 
       <div class="panel" id="optionsPanel">
-        <h2>Select the next city</h2>
+        <h2>Next stop</h2>
         <div id="optionsList"></div>
       </div>
 
       <div class="panel">
-        <h2>Route log</h2>
-        <div id="ticketLog"><p class="empty-log">No legs booked yet.</p></div>
+        <h2>Setlist &amp; ledger</h2>
+        <div id="ticketLog"><p class="empty-log">No shows booked yet.</p></div>
+        <button class="btn btn-acid export-btn" id="exportBtn" disabled>Export setlist (CSV)</button>
       </div>
 
       <button class="btn btn-ghost" id="resetBtn">Reset tour</button>
@@ -212,11 +237,11 @@
 
 <script>
 /* ---------------------------------------------------------------
-   EDIT THIS SECTION to swap in your real tour cities and routes.
+   EDIT THIS SECTION to swap in your real tour cities, routes, and
+   show payouts.
    - CITIES: name -> {lat, lng}
-   - NETWORK: name -> array of possible next-city names.
-     At runtime, already-visited cities are automatically removed
-     from the option list, so cycles in this graph are fine.
+   - NETWORK: name -> array of possible next-city names
+   - PAYOUTS: name -> $ the show at that city pays when you play it
 ------------------------------------------------------------------*/
 const CITIES = {
   "Seattle, WA":      { lat: 47.6062, lng: -122.3321 },
@@ -256,14 +281,23 @@ const NETWORK = {
   "Atlanta, GA":       ["Nashville, TN", "Austin, TX"]
 };
 
+const PAYOUTS = {
+  "Seattle, WA": 600, "Portland, OR": 450, "Chicago, IL": 900, "Los Angeles, CA": 1000,
+  "Detroit, MI": 500, "New York, NY": 1200, "Boston, MA": 700, "San Francisco, CA": 850,
+  "Denver, CO": 550, "Las Vegas, NV": 650, "San Diego, CA": 600, "Philadelphia, PA": 700,
+  "Washington, DC": 750, "Austin, TX": 600, "Nashville, TN": 800, "Atlanta, GA": 700
+};
+
 const START_CITY = "Seattle, WA";
 /* ------------------------------------------------------------- */
 
-let budget = 20000;
+let budget = 15000;
 let pricePerMile = 5;
 let currentCity = START_CITY;
 let visited = [START_CITY];
-let totalMiles = 0;
+let totalSpent = 0;
+let totalEarned = 0;
+let legLog = [];
 let map, markersLayer;
 
 function haversineMiles(a, b){
@@ -282,18 +316,12 @@ function fmtMoney(n){
 
 function initMap(){
   map = L.map('map', { zoomControl: true, attributionControl: true }).setView([39.5, -98.35], 4);
-
-  // Esri World Dark Gray Canvas (base) + Reference (labels, roads, borders)
-  // Free, no API key required for these hosted tile services.
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 16,
-    attribution: 'Esri, HERE, Garmin, FAO, NOAA, USGS'
+    maxZoom: 16, attribution: 'Esri, HERE, Garmin, FAO, NOAA, USGS'
   }).addTo(map);
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 16,
-    pane: 'overlayPane'
+    maxZoom: 16, pane: 'overlayPane'
   }).addTo(map);
-
   markersLayer = L.layerGroup().addTo(map);
   placeCity(START_CITY);
   map.setView([CITIES[START_CITY].lat, CITIES[START_CITY].lng], 5);
@@ -302,29 +330,28 @@ function initMap(){
 function placeCity(name){
   const c = CITIES[name];
   const marker = L.marker([c.lat, c.lng], {
-    icon: L.divIcon({ className:'', html:'<div class="city-dot" style="width:14px;height:14px;"></div>', iconSize:[14,14], iconAnchor:[7,7] })
+    icon: L.divIcon({ className:'', html:'<div class="city-dot" style="width:15px;height:15px;"></div>', iconSize:[15,15], iconAnchor:[7,7] })
   }).addTo(markersLayer);
   marker.bindTooltip(name, { permanent:true, direction:'top', className:'city-label', offset:[0,-8] });
 }
 
 function drawLeg(fromName, toName){
   const a = CITIES[fromName], b = CITIES[toName];
-  const line = L.polyline([[a.lat,a.lng],[b.lat,b.lng]], {
-    color: '#7C5CFF', weight: 3, opacity: .9, className: 'route-path'
+  L.polyline([[a.lat,a.lng],[b.lat,b.lng]], {
+    color: '#FF2360', weight: 3, opacity: .95, className: 'route-path'
   }).addTo(markersLayer);
-  return line;
 }
 
 function renderBoard(){
   document.getElementById('budgetReadout').textContent = fmtMoney(budget);
-  document.getElementById('budgetReadout').classList.toggle('negative', budget < 0);
-  document.getElementById('milesReadout').textContent = Math.round(totalMiles).toLocaleString();
+  document.getElementById('spentReadout').textContent = fmtMoney(totalSpent);
+  document.getElementById('earnedReadout').textContent = fmtMoney(totalEarned);
 }
 
 function renderStatus(){
   document.getElementById('currentCityName').textContent = currentCity;
   document.getElementById('legCount').textContent =
-    `Leg ${visited.length - 1} \u00b7 ${visited.length} stop${visited.length===1?'':'s'} so far`;
+    `Leg ${visited.length - 1} \u00b7 ${visited.length} show${visited.length===1?'':'s'} played`;
 }
 
 function renderOptions(){
@@ -333,7 +360,7 @@ function renderOptions(){
   const neighbors = (NETWORK[currentCity] || []).filter(n => !visited.includes(n));
 
   if (neighbors.length === 0){
-    list.innerHTML = `<p class="end-msg">No unvisited cities left on the route from <strong>${currentCity}</strong>. <br><br>Tour complete &mdash; ${visited.length} stops, ${Math.round(totalMiles).toLocaleString()} miles, ${fmtMoney(budget)} remaining.</p>`;
+    list.innerHTML = `<p class="end-msg">No unplayed cities left on the route from <strong>${currentCity}</strong>.<br><br>Tour's over &mdash; ${visited.length} shows, ${fmtMoney(budget)} in the fund.</p>`;
     return;
   }
 
@@ -341,6 +368,7 @@ function renderOptions(){
   neighbors.forEach(name => {
     const miles = haversineMiles(CITIES[currentCity], CITIES[name]);
     const cost = miles * pricePerMile;
+    const payout = PAYOUTS[name] || 0;
     const affordable = cost <= budget;
     if (affordable) anyAffordable = true;
 
@@ -350,11 +378,14 @@ function renderOptions(){
     btn.innerHTML = `
       <span>
         <span class="name">${name}</span><br>
-        <span class="meta">${Math.round(miles).toLocaleString()} mi${!affordable ? '<br><span class="tag">Over budget</span>' : ''}</span>
+        <span class="meta">${Math.round(miles).toLocaleString()} mi${!affordable ? '<br><span class="tag">Can\\'t afford the drive</span>' : ''}</span>
       </span>
-      <span class="cost">${fmtMoney(cost)}</span>
+      <span class="figs">
+        <div class="cost">-${fmtMoney(cost)}</div>
+        <div class="pay">+${fmtMoney(payout)}</div>
+      </span>
     `;
-    btn.addEventListener('click', () => selectCity(name, miles, cost));
+    btn.addEventListener('click', () => selectCity(name, miles, cost, payout));
     list.appendChild(btn);
   });
 
@@ -362,33 +393,49 @@ function renderOptions(){
     const p = document.createElement('p');
     p.className = 'end-msg';
     p.style.marginTop = '12px';
-    p.innerHTML = `Every remaining route from <strong>${currentCity}</strong> costs more than your remaining budget. <br><br>Tour ends here &mdash; ${visited.length} stops, ${Math.round(totalMiles).toLocaleString()} miles, ${fmtMoney(budget)} remaining.`;
+    p.innerHTML = `Every remaining drive from <strong>${currentCity}</strong> costs more than what's in the fund.<br><br>Tour's over &mdash; ${visited.length} shows, ${fmtMoney(budget)} in the fund.`;
     list.appendChild(p);
   }
 }
 
-function addTicketStub(fromName, toName, miles, cost){
+function addTicketStub(entry){
   const log = document.getElementById('ticketLog');
   const empty = log.querySelector('.empty-log');
   if (empty) empty.remove();
 
   const stub = document.createElement('div');
   stub.className = 'stub';
+  const netClass = entry.net >= 0 ? 'pos' : 'neg';
+  const netSign = entry.net >= 0 ? '+' : '-';
+
+  const routeLine = entry.from
+    ? `${entry.from.split(',')[0]} &rarr; ${entry.to.split(',')[0]}`
+    : `${entry.to.split(',')[0]} (opener)`;
+
   stub.innerHTML = `
-    <span class="route">${fromName.split(',')[0]} &rarr; ${toName.split(',')[0]}</span>
-    <span class="miles">${Math.round(miles).toLocaleString()} mi</span>
-    <span class="price">${fmtMoney(cost)}</span>
+    <div class="route"><span>${routeLine}</span><span>Leg ${entry.leg}</span></div>
+    ${entry.miles ? `<div class="row"><span>${Math.round(entry.miles).toLocaleString()} mi drive</span><span>-${fmtMoney(entry.travelCost)}</span></div>` : ''}
+    <div class="row"><span>Show payout</span><span>+${fmtMoney(entry.payout)}</span></div>
+    <span class="net ${netClass}">${netSign}${fmtMoney(Math.abs(entry.net))} net</span>
   `;
   log.prepend(stub);
 }
 
-function selectCity(name, miles, cost){
+function selectCity(name, miles, travelCost, payout){
   drawLeg(currentCity, name);
   placeCity(name);
-  addTicketStub(currentCity, name, miles, cost);
 
-  budget -= cost;
-  totalMiles += miles;
+  budget = budget - travelCost + payout;
+  totalSpent += travelCost;
+  totalEarned += payout;
+
+  const entry = {
+    leg: visited.length, from: currentCity, to: name,
+    miles, travelCost, payout, net: payout - travelCost, runningBudget: budget
+  };
+  legLog.push(entry);
+  addTicketStub(entry);
+
   currentCity = name;
   visited.push(name);
 
@@ -398,37 +445,64 @@ function selectCity(name, miles, cost){
   renderBoard();
   renderStatus();
   renderOptions();
+  document.getElementById('exportBtn').disabled = false;
 }
 
-function resetTour(){
+function exportCSV(){
+  const rows = [["Leg","From","To","Miles","Travel Cost","Show Payout","Net This Leg","Running Fund"]];
+  legLog.forEach(e => {
+    rows.push([
+      e.leg, e.from || "", e.to, e.miles ? Math.round(e.miles) : 0,
+      e.travelCost ? Math.round(e.travelCost) : 0, Math.round(e.payout),
+      Math.round(e.net), Math.round(e.runningBudget)
+    ]);
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'tour-setlist.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function startTour(){
   budget = parseFloat(document.getElementById('startBudget').value) || 0;
   pricePerMile = parseFloat(document.getElementById('pricePerMile').value) || 0;
   currentCity = START_CITY;
   visited = [START_CITY];
-  totalMiles = 0;
+  totalSpent = 0; totalEarned = 0; legLog = [];
 
-  markersLayer.clearLayers();
-  placeCity(START_CITY);
-  map.setView([CITIES[START_CITY].lat, CITIES[START_CITY].lng], 5);
+  const openerPayout = PAYOUTS[START_CITY] || 0;
+  budget += openerPayout;
+  totalEarned += openerPayout;
+  const entry = { leg: 0, from: null, to: START_CITY, miles: 0, travelCost: 0, payout: openerPayout, net: openerPayout, runningBudget: budget };
+  legLog.push(entry);
 
-  document.getElementById('ticketLog').innerHTML = '<p class="empty-log">No legs booked yet.</p>';
+  document.getElementById('ticketLog').innerHTML = '';
+  addTicketStub(entry);
+  document.getElementById('exportBtn').disabled = false;
+
   renderBoard();
   renderStatus();
   renderOptions();
 }
 
 document.getElementById('startBtn').addEventListener('click', () => {
-  budget = parseFloat(document.getElementById('startBudget').value) || 0;
-  pricePerMile = parseFloat(document.getElementById('pricePerMile').value) || 0;
   document.getElementById('setupPanel').classList.add('hidden');
   document.getElementById('stage').classList.remove('hidden');
   initMap();
-  renderBoard();
-  renderStatus();
-  renderOptions();
+  startTour();
 });
 
-document.getElementById('resetBtn').addEventListener('click', resetTour);
+document.getElementById('resetBtn').addEventListener('click', () => {
+  markersLayer.clearLayers();
+  startTour();
+  placeCity(START_CITY);
+  map.setView([CITIES[START_CITY].lat, CITIES[START_CITY].lng], 5);
+});
+
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
 </script>
 </body>
 </html>
