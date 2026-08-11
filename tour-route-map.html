@@ -178,15 +178,16 @@
   .shirt-wrap{
     background:var(--paper-dim); padding:30px 20px; display:flex; justify-content:center;
   }
+  .tee-outline{
+    position:relative; width:294px; height:354px;
+    clip-path: polygon(33% 0%, 42% 8%, 50% 4%, 58% 8%, 67% 0%, 85% 12%, 100% 30%, 85% 42%, 75% 32%, 75% 100%, 25% 100%, 25% 32%, 15% 42%, 0% 30%, 15% 12%);
+    background: var(--hot);
+    display:flex; align-items:center; justify-content:center;
+  }
   .tee{
     position:relative; width:280px; height:340px;
     clip-path: polygon(33% 0%, 42% 8%, 50% 4%, 58% 8%, 67% 0%, 85% 12%, 100% 30%, 85% 42%, 75% 32%, 75% 100%, 25% 100%, 25% 32%, 15% 42%, 0% 30%, 15% 12%);
     background: #000000;
-  }
-  .tee::before{
-    content:''; position:absolute; inset:-7px;
-    clip-path: polygon(33% 0%, 42% 8%, 50% 4%, 58% 8%, 67% 0%, 85% 12%, 100% 30%, 85% 42%, 75% 32%, 75% 100%, 25% 100%, 25% 32%, 15% 42%, 0% 30%, 15% 12%);
-    background: var(--hot); z-index:-1;
   }
   .tee-print{
     position:absolute; top:22%; left:26%; right:26%; bottom:8%;
@@ -316,6 +317,7 @@
 
     <div class="side">
       <button class="btn btn-ghost" id="toggleShirtBtn" style="width:100%;">View tour shirt</button>
+      <button class="btn btn-primary" id="bookTourBtn" style="width:100%;">Book tour</button>
 
       <div class="panel">
         <h2>Now playing</h2>
@@ -344,12 +346,14 @@
       <h2 class="shirt-modal-title">Tour shirt</h2>
       <p class="shirt-note">Your tour dates, printed up. Grab the PNG once the route's locked in.</p>
       <div class="shirt-wrap" id="shirtWrap">
-        <div class="tee" id="tee">
-          <div class="tee-print">
-            <div class="tee-heading">2026 TOUR</div>
-            <div class="tee-rule"></div>
-            <div class="tee-dates" id="teeDates"></div>
-            <div class="tee-tagline">no sleep till the next city</div>
+        <div class="tee-outline">
+          <div class="tee" id="tee">
+            <div class="tee-print">
+              <div class="tee-heading">2026 TOUR</div>
+              <div class="tee-rule"></div>
+              <div class="tee-dates" id="teeDates"></div>
+              <div class="tee-tagline">no sleep till the next city</div>
+            </div>
           </div>
         </div>
       </div>
@@ -525,13 +529,6 @@ function renderOptions(){
 
   if (neighbors.length === 0){
     list.innerHTML = "<p class=\"end-msg\">You've played every city on the map.<br><br>Tour's over &mdash; " + visited.length + " shows, " + fmtMoney(budget) + " in the fund.</p>";
-    const bookBtn = document.createElement('button');
-    bookBtn.className = 'btn btn-primary';
-    bookBtn.style.width = '100%';
-    bookBtn.style.marginTop = '10px';
-    bookBtn.textContent = 'Book tour';
-    bookBtn.addEventListener('click', showBookedModal);
-    list.appendChild(bookBtn);
     return;
   }
 
@@ -674,6 +671,10 @@ function startTour(){
 
 document.getElementById('toggleShirtBtn').addEventListener('click', () => {
   showShirt();
+});
+
+document.getElementById('bookTourBtn').addEventListener('click', () => {
+  showBookedModal();
 });
 
 document.getElementById('shirtCloseBtn').addEventListener('click', () => {
