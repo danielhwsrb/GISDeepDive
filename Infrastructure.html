@@ -127,8 +127,9 @@
 
   .flow-path{
     fill:none;
-    stroke:var(--line);
-    stroke-width:1.6;
+    stroke:#4a7ba3;
+    stroke-width:2.2;
+    stroke-opacity:0.9;
     transition:stroke 0.35s ease, stroke-width 0.35s ease, opacity 0.35s ease;
   }
   .flow-path.highlight{ stroke:var(--amber); stroke-width:2.4; }
@@ -188,7 +189,7 @@
     text-transform:uppercase;
   }
   .node.tag-violet .tag{ fill:var(--violet); }
-  .status-dot{ fill:var(--cyan); animation:pulse 2.6s ease-in-out infinite; }
+  .status-dot{ fill:var(--cyan); }
   .node.active .status-dot{ fill:var(--amber); }
 
   #tooltip{
