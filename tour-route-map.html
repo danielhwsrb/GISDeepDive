@@ -14,7 +14,7 @@
     --ink:#0D0D0D;
     --paper:#EDE9DD;
     --paper-dim:#DAD5C4;
-    --hot:#FF2360;
+    --hot:#FF96A1;
     --acid:#D6FF3B;
     --blue:#3AA6FF;
     --muted:#8a8676;
@@ -493,7 +493,7 @@ function placeCity(name){
 function drawLeg(fromName, toName){
   const a = CITIES[fromName], b = CITIES[toName];
   const line = L.polyline([[a.lat,a.lng],[b.lat,b.lng]], {
-    color: '#FF2360', weight: 3, opacity: .95, className: 'route-path'
+    color: '#FF96A1', weight: 3, opacity: .95, className: 'route-path'
   }).addTo(markersLayer);
   routeLines.push(line);
 }
