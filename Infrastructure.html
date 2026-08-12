@@ -210,13 +210,13 @@
 <header>
   <div class="eyebrow">🥁 Spatial Distortion — Live Rig</div>
   <h1>QA &amp; Production Architecture</h1>
-  <p class="subhead">Every box is a drum in the kit. Click one to hear what it does. Edits flow Staging → QA → PRD on a schedule — nobody edits QA or PRD direct.</p>
+  <p class="subhead">Every box is a drum in the kit. Click one to hear what it does. Edits land in Staging, then flow to QA, then PRD, on a schedule — nobody edits QA or PRD direct.</p>
 </header>
 
 <main>
   <div class="diagram-wrap">
     <div class="grid-bg"></div>
-    <svg id="diagram" viewBox="0 0 1900 1320" xmlns="http://www.w3.org/2000/svg">
+    <svg id="diagram" viewBox="0 0 1900 1160" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <marker id="arrow-pink" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="#ff2f6e"></path>
@@ -235,11 +235,11 @@
       </defs>
 
       <g class="row-band">
-        <rect x="0" y="20" width="1900" height="830" rx="18" fill="#ff2f6e" opacity="0.045"></rect>
-        <rect x="0" y="850" width="1900" height="450" rx="18" fill="#9b5de0" opacity="0.045"></rect>
+        <rect x="0" y="20" width="1900" height="660" rx="18" fill="#ff2f6e" opacity="0.045"></rect>
+        <rect x="0" y="680" width="1900" height="460" rx="18" fill="#9b5de0" opacity="0.045"></rect>
       </g>
-      <text class="row-label" fill="#ff2f6e" transform="rotate(-90 26,435)" x="26" y="435" text-anchor="middle">QA SIDE</text>
-      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,1085)" x="26" y="1085" text-anchor="middle">PRD SIDE</text>
+      <text class="row-label" fill="#ff2f6e" transform="rotate(-90 26,350)" x="26" y="350" text-anchor="middle">QA SIDE</text>
+      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,920)" x="26" y="920" text-anchor="middle">PRD SIDE</text>
 
       <g id="connectors"></g>
       <g id="nodes"></g>
@@ -270,73 +270,67 @@
 <script>
   // ---------- Node layout (drumheads) ----------
   const NODES = [
-    {id:"pro", cx:115, cy:100, r:68, row:"qa", tag:"Editors", title:"ArcGIS Pro", subtitle:["In-house edits"]},
-    {id:"stagingdb", cx:115, cy:266, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs + SDE"]},
-    {id:"qadb", cx:115, cy:452, r:88, row:"qa", tag:"QA", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
-    {id:"qa01", cx:430, cy:369, r:68, row:"qa", tag:"QA", title:"gissvr-qa-01", subtitle:["Standalone Server"]},
-    {id:"qa02", cx:430, cy:535, r:68, row:"qa", tag:"QA", title:"gissvr-qa-02", subtitle:["Standalone Server"]},
-    {id:"qads", cx:730, cy:452, r:68, row:"qa", tag:"QA", title:"gisent-qa-ds", subtitle:["Server + Data Store"]},
-    {id:"qaportal", cx:1000, cy:452, r:88, row:"qa", tag:"QA", title:"gisent-qa-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
-    {id:"qagateway", cx:1290, cy:452, r:68, row:"qa", tag:"Edge · QA", title:"Azure Gateway", subtitle:["Fronts QA-01 / 02"]},
-    {id:"qaservice", cx:1520, cy:452, r:68, row:"qa", tag:"API · QA", title:"Service APIs", subtitle:["For QA front-ends"]},
-    {id:"qawsrb", cx:1740, cy:452, r:72, row:"qa", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
+    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs + SDE"]},
+    {id:"qadb", cx:115, cy:286, r:88, row:"qa", tag:"QA", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
+    {id:"qa01", cx:430, cy:203, r:68, row:"qa", tag:"QA", title:"gissvr-qa-01", subtitle:["Standalone Server"]},
+    {id:"qa02", cx:430, cy:369, r:68, row:"qa", tag:"QA", title:"gissvr-qa-02", subtitle:["Standalone Server"]},
+    {id:"qads", cx:730, cy:286, r:68, row:"qa", tag:"QA", title:"gisent-qa-ds", subtitle:["Server + Data Store"]},
+    {id:"qaportal", cx:1000, cy:286, r:88, row:"qa", tag:"QA", title:"gisent-qa-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
+    {id:"qagateway", cx:1290, cy:286, r:68, row:"qa", tag:"Edge · QA", title:"Azure Gateway", subtitle:["Fronts QA-01 / 02"]},
+    {id:"qaservice", cx:1520, cy:286, r:68, row:"qa", tag:"API · QA", title:"Service APIs", subtitle:["For QA front-ends"]},
+    {id:"qawsrb", cx:1740, cy:286, r:72, row:"qa", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
 
-    {id:"agol", cx:430, cy:711, r:80, row:"public", tag:"Public", title:"ArcGIS Online", subtitle:["Org site"]},
+    {id:"agol", cx:430, cy:545, r:80, row:"public", tag:"Public", title:"ArcGIS Online", subtitle:["Org site"]},
 
-    {id:"prddb", cx:115, cy:970, r:88, row:"prd", tag:"PRD", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
-    {id:"prd01", cx:430, cy:887, r:68, row:"prd", tag:"PRD", title:"gissvr-prd-01", subtitle:["Standalone Server"]},
-    {id:"prd02", cx:430, cy:1053, r:68, row:"prd", tag:"PRD", title:"gissvr-prd-02", subtitle:["Standalone Server"]},
-    {id:"prdds", cx:730, cy:970, r:68, row:"prd", tag:"PRD", title:"gisent-prd-ds", subtitle:["Server + Data Store"]},
-    {id:"prdportal", cx:1000, cy:970, r:88, row:"prd", tag:"PRD", title:"gisent-prd-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
-    {id:"prdgateway", cx:1290, cy:970, r:68, row:"prd", tag:"Edge · PRD", title:"Azure Gateway", subtitle:["Fronts PRD-01 / 02"]},
-    {id:"prdservice", cx:1520, cy:970, r:68, row:"prd", tag:"API · PRD", title:"Service APIs", subtitle:["For production"]},
-    {id:"prdwsrb", cx:1740, cy:970, r:72, row:"prd", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
+    {id:"prddb", cx:115, cy:804, r:88, row:"prd", tag:"PRD", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
+    {id:"prd01", cx:430, cy:721, r:68, row:"prd", tag:"PRD", title:"gissvr-prd-01", subtitle:["Standalone Server"]},
+    {id:"prd02", cx:430, cy:887, r:68, row:"prd", tag:"PRD", title:"gissvr-prd-02", subtitle:["Standalone Server"]},
+    {id:"prdds", cx:730, cy:804, r:68, row:"prd", tag:"PRD", title:"gisent-prd-ds", subtitle:["Server + Data Store"]},
+    {id:"prdportal", cx:1000, cy:804, r:88, row:"prd", tag:"PRD", title:"gisent-prd-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
+    {id:"prdgateway", cx:1290, cy:804, r:68, row:"prd", tag:"Edge · PRD", title:"Azure Gateway", subtitle:["Fronts PRD-01 / 02"]},
+    {id:"prdservice", cx:1520, cy:804, r:68, row:"prd", tag:"API · PRD", title:"Service APIs", subtitle:["For production"]},
+    {id:"prdwsrb", cx:1740, cy:804, r:72, row:"prd", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
 
-    {id:"internalapps", cx:1000, cy:1174, r:84, row:"apps", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
+    {id:"internalapps", cx:1000, cy:1008, r:84, row:"apps", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
   ];
 
   // ---------- Connectors ----------
   const EDGES = [
-    {id:"pro-stagingdb", from:"pro", to:"stagingdb", row:"qa", d:"M115,168 L115,198"},
-    {id:"stagingdb-qadb", from:"stagingdb", to:"qadb", row:"promo", promo:true, d:"M115,334 L115,364"},
+    {id:"stagingdb-qadb", from:"stagingdb", to:"qadb", row:"promo", promo:true, d:"M115,168 L115,198"},
 
-    {id:"qadb-qa01", from:"qadb", to:"qa01", row:"qa", d:"M177,404 C260,394 300,406 382,406"},
-    {id:"qadb-qa02", from:"qadb", to:"qa02", row:"qa", d:"M177,500 C260,504 300,498 382,498"},
-    {id:"qadb-qads", from:"qadb", to:"qads", row:"qa", d:"M203,452 L662,452"},
-    {id:"qads-qaportal", from:"qads", to:"qaportal", row:"qa", bidir:true, d:"M798,452 L912,452"},
-    {id:"qa01-qagateway", from:"qa01", to:"qagateway", row:"qa", d:"M498,369 C750,309 1050,309 1290,384"},
-    {id:"qa02-qagateway", from:"qa02", to:"qagateway", row:"qa", d:"M498,535 C750,599 1050,599 1290,520"},
-    {id:"qagateway-qaservice", from:"qagateway", to:"qaservice", row:"qa", d:"M1358,452 L1452,452"},
-    {id:"qaservice-qawsrb", from:"qaservice", to:"qawsrb", row:"qa", d:"M1588,452 L1668,452"},
-    {id:"qa01-agol", from:"qa01", to:"agol", row:"qa", d:"M430,437 C560,449 560,631 430,631"},
-    {id:"qa02-agol", from:"qa02", to:"agol", row:"qa", d:"M430,603 L430,631"},
+    {id:"qadb-qa01", from:"qadb", to:"qa01", row:"qa", d:"M177,238 C260,228 300,240 382,240"},
+    {id:"qadb-qa02", from:"qadb", to:"qa02", row:"qa", d:"M177,334 C260,338 300,332 382,332"},
+    {id:"qadb-qads", from:"qadb", to:"qads", row:"qa", d:"M203,286 L662,286"},
+    {id:"qads-qaportal", from:"qads", to:"qaportal", row:"qa", bidir:true, d:"M798,286 L912,286"},
+    {id:"qa01-qagateway", from:"qa01", to:"qagateway", row:"qa", d:"M498,203 C750,143 1050,143 1290,218"},
+    {id:"qa02-qagateway", from:"qa02", to:"qagateway", row:"qa", d:"M498,369 C750,433 1050,433 1290,354"},
+    {id:"qagateway-qaservice", from:"qagateway", to:"qaservice", row:"qa", d:"M1358,286 L1452,286"},
+    {id:"qaservice-qawsrb", from:"qaservice", to:"qawsrb", row:"qa", d:"M1588,286 L1668,286"},
+    {id:"qa01-agol", from:"qa01", to:"agol", row:"qa", d:"M430,271 C560,283 560,465 430,465"},
+    {id:"qa02-agol", from:"qa02", to:"agol", row:"qa", d:"M430,437 L430,465"},
 
-    {id:"promo", from:"qadb", to:"prddb", row:"promo", promo:true, d:"M115,540 L115,882"},
+    {id:"promo", from:"qadb", to:"prddb", row:"promo", promo:true, d:"M115,374 L115,716"},
 
-    {id:"prddb-prd01", from:"prddb", to:"prd01", row:"prd", d:"M177,922 C260,919 300,924 382,924"},
-    {id:"prddb-prd02", from:"prddb", to:"prd02", row:"prd", d:"M177,1018 C260,1021 300,1016 382,1016"},
-    {id:"prddb-prdds", from:"prddb", to:"prdds", row:"prd", d:"M203,970 L662,970"},
-    {id:"prdds-prdportal", from:"prdds", to:"prdportal", row:"prd", bidir:true, d:"M798,970 L912,970"},
-    {id:"prd01-prdgateway", from:"prd01", to:"prdgateway", row:"prd", d:"M498,887 C750,827 1050,827 1290,902"},
-    {id:"prd02-prdgateway", from:"prd02", to:"prdgateway", row:"prd", d:"M498,1053 C750,1117 1050,1117 1290,1038"},
-    {id:"prdgateway-prdservice", from:"prdgateway", to:"prdservice", row:"prd", d:"M1358,970 L1452,970"},
-    {id:"prdservice-prdwsrb", from:"prdservice", to:"prdwsrb", row:"prd", d:"M1588,970 L1668,970"},
-    {id:"prd01-agol", from:"prd01", to:"agol", row:"prd", d:"M430,819 L430,791"},
-    {id:"prd02-agol", from:"prd02", to:"agol", row:"prd", d:"M430,985 C560,985 560,791 430,791"},
+    {id:"prddb-prd01", from:"prddb", to:"prd01", row:"prd", d:"M177,756 C260,753 300,758 382,758"},
+    {id:"prddb-prd02", from:"prddb", to:"prd02", row:"prd", d:"M177,852 C260,855 300,850 382,850"},
+    {id:"prddb-prdds", from:"prddb", to:"prdds", row:"prd", d:"M203,804 L662,804"},
+    {id:"prdds-prdportal", from:"prdds", to:"prdportal", row:"prd", bidir:true, d:"M798,804 L912,804"},
+    {id:"prd01-prdgateway", from:"prd01", to:"prdgateway", row:"prd", d:"M498,721 C750,661 1050,661 1290,736"},
+    {id:"prd02-prdgateway", from:"prd02", to:"prdgateway", row:"prd", d:"M498,887 C750,951 1050,951 1290,872"},
+    {id:"prdgateway-prdservice", from:"prdgateway", to:"prdservice", row:"prd", d:"M1358,804 L1452,804"},
+    {id:"prdservice-prdwsrb", from:"prdservice", to:"prdwsrb", row:"prd", d:"M1588,804 L1668,804"},
+    {id:"prd01-agol", from:"prd01", to:"agol", row:"prd", d:"M430,653 L430,625"},
+    {id:"prd02-agol", from:"prd02", to:"agol", row:"prd", d:"M430,819 C560,819 560,625 430,625"},
 
-    {id:"prdportal-internalapps", from:"prdportal", to:"internalapps", row:"prd", d:"M1000,1058 L1000,1090"}
+    {id:"prdportal-internalapps", from:"prdportal", to:"internalapps", row:"prd", d:"M1000,892 L1000,924"}
   ];
 
   // ---------- Panel descriptions ----------
   const DATA = {
-    pro: { tag:"Editors", title:"ArcGIS Pro", subtitle:"In-house edits",
-      summary:"Staff use ArcGIS Pro to edit data — only against the Staging GIS DB.",
-      description:"In-house staff use ArcGIS Pro to edit data directly against the Staging GIS DB. It's the only database anyone edits by hand — everything downstream of it (QA, then Production) is updated later through separate, scheduled promotion processes, so live edits are always reviewed before they travel any further.",
-      flows:[{dir:"out", label:"Edits → Staging GIS DB"}] },
     stagingdb: { tag:"Staging", title:"Staging GIS DB", subtitle:"File GDBs + SDE",
-      summary:"Where ArcGIS Pro edits land first, before promotion to QA.",
-      description:"A holding database that takes edits straight from ArcGIS Pro. Nothing downstream touches this data directly — on a schedule, its contents are promoted into the QA Enterprise Database, keeping raw in-progress edits separate from anything QA servers or apps are serving.",
-      flows:[{dir:"in", label:"ArcGIS Pro edits"},{dir:"out", label:"Promoted → Enterprise DB (QA)"}] },
+      summary:"Where edits land first, before promotion to QA.",
+      description:"A holding database that takes edits directly from staff working in ArcGIS Pro. Nothing downstream touches this data directly — on a schedule, its contents are promoted into the QA Enterprise Database, keeping raw in-progress edits separate from anything QA servers or apps are serving.",
+      flows:[{dir:"out", label:"Promoted → Enterprise DB (QA)"}] },
     qadb: { tag:"QA", title:"Enterprise Database (QA)", subtitle:"File GDBs + SDE",
       summary:"The QA enterprise database — file geodatabases plus an SDE.",
       description:"The QA enterprise database, made up of file geodatabases and an SDE-enabled database. It's fed by the Staging GIS DB through a scheduled promotion, then in turn feeds both QA standalone servers directly and gisent-qa-ds. On a further schedule, its own contents are promoted to the Production database.",
