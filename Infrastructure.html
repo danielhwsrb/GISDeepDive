@@ -123,9 +123,11 @@
   .flow-path.dim{ opacity:0.16; }
   .flow-path.promo{ stroke:var(--purple); stroke-width:5; stroke-dasharray:2 12; stroke-linecap:round; }
   .flow-path.promo.highlight{ stroke:var(--yellow); }
+  .promo-hit{ fill:none; stroke:transparent; stroke-width:26; cursor:help; }
 
   .flow-dot{ fill:var(--yellow); filter:drop-shadow(0 0 5px var(--yellow-soft)); }
   .flow-dot.promo-dot{ fill:var(--purple); filter:drop-shadow(0 0 5px var(--purple-soft)); }
+  .flow-dot.request-dot{ fill:var(--cream); filter:drop-shadow(0 0 4px rgba(242,237,226,0.6)); }
 
   .flow-label{ font-family:var(--font-mono); font-size:10px; fill:var(--text-faint); letter-spacing:0.04em; text-transform:uppercase; }
 
@@ -261,7 +263,8 @@
   <div class="legend-item"><span class="legend-swatch"></span> QA signal flow</div>
   <div class="legend-item"><span class="legend-swatch purple"></span> PRD signal flow</div>
   <div class="legend-item"><span class="legend-swatch dashed"></span> scheduled promotion (Staging → QA → PRD)</div>
-  <div class="legend-item"><span class="legend-dot"></span> traveling pulse = direction</div>
+  <div class="legend-item"><span class="legend-dot"></span> yellow pulse = data flowing down</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--cream)"></span> white pulse = requests flowing up</div>
   <div class="legend-item"><span class="legend-swatch yellow"></span> selected drum's connections</div>
 </footer>
 
@@ -296,7 +299,7 @@
 
   // ---------- Connectors ----------
   const EDGES = [
-    {id:"stagingdb-qadb", from:"stagingdb", to:"qadb", row:"promo", promo:true, d:"M115,168 L115,198"},
+    {id:"stagingdb-qadb", from:"stagingdb", to:"qadb", row:"promo", promo:true, note:"End-of-month (EOM) update — Staging is promoted into QA once a month, not continuously.", d:"M115,168 L115,198"},
 
     {id:"qadb-qa01", from:"qadb", to:"qa01", row:"qa", d:"M177,238 C260,228 300,240 382,240"},
     {id:"qadb-qa02", from:"qadb", to:"qa02", row:"qa", d:"M177,334 C260,338 300,332 382,332"},
@@ -309,7 +312,7 @@
     {id:"qa01-agol", from:"qa01", to:"agol", row:"qa", d:"M430,271 C560,283 560,465 430,465"},
     {id:"qa02-agol", from:"qa02", to:"agol", row:"qa", d:"M430,437 L430,465"},
 
-    {id:"promo", from:"qadb", to:"prddb", row:"promo", promo:true, d:"M115,374 L115,716"},
+    {id:"promo", from:"qadb", to:"prddb", row:"promo", promo:true, note:"End-of-month (EOM) update — QA is promoted into Production once a month, not continuously.", d:"M115,374 L115,716"},
 
     {id:"prddb-prd01", from:"prddb", to:"prd01", row:"prd", d:"M177,756 C260,753 300,758 382,758"},
     {id:"prddb-prd02", from:"prddb", to:"prd02", row:"prd", d:"M177,852 C260,855 300,850 382,850"},
@@ -425,11 +428,28 @@
       id: 'p-' + edge.id,
       'data-source': edge.from,
       'data-target': edge.to,
-      d: edge.d,
-      'marker-end': 'url(#' + marker + ')'
+      d: edge.d
     });
-    if(edge.bidir) path.setAttribute('marker-start', 'url(#' + marker + ')');
     connectorsG.appendChild(path);
+
+    if(isPromo && edge.note){
+      const hit = el('path', { class:'promo-hit', d: edge.d });
+      hit.addEventListener('mouseenter', () => {
+        tooltip.innerHTML = '<span class="tt-title">Scheduled Promotion — EOM</span>' + edge.note;
+        tooltip.classList.add('show');
+      });
+      hit.addEventListener('mousemove', (e) => {
+        const pad = 16;
+        let x = e.clientX + pad, y = e.clientY + pad;
+        const rect = tooltip.getBoundingClientRect();
+        if(x + rect.width > window.innerWidth - 12) x = e.clientX - rect.width - pad;
+        if(y + rect.height > window.innerHeight - 12) y = e.clientY - rect.height - pad;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      });
+      hit.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+      connectorsG.appendChild(hit);
+    }
 
     const dot = el('circle', { r: isPromo ? 4.6 : 4.4, class: 'flow-dot' + (isPromo ? ' promo-dot' : '') });
     const anim = el('animateMotion', {
@@ -444,6 +464,25 @@
     anim.appendChild(mpath);
     dot.appendChild(anim);
     connectorsG.appendChild(dot);
+
+    // reverse "request" dot — traffic heading back upstream (skip on scheduled promotion lines)
+    if(!isPromo){
+      const reqDot = el('circle', { r: 3.6, class: 'flow-dot request-dot' });
+      const reqAnim = el('animateMotion', {
+        dur: (2.6 + Math.random()*2.4).toFixed(1) + 's',
+        begin: (Math.random()*1.6).toFixed(1) + 's',
+        repeatCount: 'indefinite',
+        rotate: 'auto',
+        keyPoints: '1;0',
+        keyTimes: '0;1'
+      });
+      const reqMpath = el('mpath', {});
+      reqMpath.setAttributeNS('http://www.w3.org/1999/xlink', 'href', '#p-' + edge.id);
+      reqMpath.setAttribute('href', '#p-' + edge.id);
+      reqAnim.appendChild(reqMpath);
+      reqDot.appendChild(reqAnim);
+      connectorsG.appendChild(reqDot);
+    }
   });
 
   // ---- draw drumhead nodes ----
