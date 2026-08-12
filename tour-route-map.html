@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Route the Tour</title>
+<title>Spatial Distortion — Route the Tour</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Permanent+Marker&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -48,6 +48,11 @@
     -webkit-text-stroke: 2px var(--ink);
     text-shadow: 4px 4px 0 var(--ink), 7px 7px 0 var(--hot);
     transform:skewX(-3deg);
+  }
+  .subtitle{
+    font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px;
+    text-transform:uppercase; letter-spacing:.14em; color:var(--acid);
+    margin:-10px 0 18px;
   }
 
   .board-bar{
@@ -194,6 +199,10 @@
     display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
     text-align:center; overflow:hidden;
   }
+  .tee-band{
+    font-family:'Anton',sans-serif; color:var(--paper); text-transform:uppercase;
+    font-size:14px; letter-spacing:.02em; line-height:1.05; margin-bottom:4px;
+  }
   .tee-heading{
     font-family:'Anton',sans-serif; color:var(--acid); font-size:19px; letter-spacing:.03em;
     line-height:.95; margin-bottom:8px;
@@ -297,7 +306,8 @@
 
   <header>
     <span class="flag">book your own darn tour</span>
-    <h1>Route the Tour</h1>
+    <h1>Spatial Distortion</h1>
+    <p class="subtitle">route the 2026 tour</p>
   </header>
 
   <div class="setup" id="setupPanel">
@@ -349,6 +359,7 @@
         <div class="tee-outline">
           <div class="tee" id="tee">
             <div class="tee-print">
+              <div class="tee-band">Spatial Distortion</div>
               <div class="tee-heading">2026 TOUR</div>
               <div class="tee-rule"></div>
               <div class="tee-dates" id="teeDates"></div>
