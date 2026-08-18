@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spatial Distortion — Live Rig</title>
+<title>Spatial Distortion — Live Drum Rig</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -214,7 +214,7 @@
 <body>
 
 <header>
-  <div class="eyebrow">🥁 Spatial Distortion — Live Rig</div>
+  <div class="eyebrow">🥁 Spatial Distortion — Live Drum Rig</div>
   <h1>QA &amp; Production Architecture</h1>
   <p class="subhead">Every box is a drum in the kit. Click one to hear what it does. Edits land in Staging, then flow to QA, then PRD, on a schedule — nobody edits QA or PRD direct.</p>
 </header>
@@ -245,7 +245,7 @@
         <rect x="0" y="680" width="1900" height="460" rx="18" fill="#9b5de0" opacity="0.045"></rect>
       </g>
       <text class="row-label" fill="#ff2f6e" transform="rotate(-90 26,350)" x="26" y="350" text-anchor="middle">QA SIDE</text>
-      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,920)" x="26" y="920" text-anchor="middle">PRD SIDE</text>
+      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,920)" x="26" y="920" text-anchor="middle">PROD SIDE</text>
 
       <g id="connectors"></g>
       <g id="nodes"></g>
@@ -265,8 +265,8 @@
 
 <footer>
   <div class="legend-item"><span class="legend-swatch"></span> QA signal flow</div>
-  <div class="legend-item"><span class="legend-swatch purple"></span> PRD signal flow</div>
-  <div class="legend-item"><span class="legend-swatch dashed"></span> scheduled promotion (Staging → QA → PRD)</div>
+  <div class="legend-item"><span class="legend-swatch purple"></span> PROD signal flow</div>
+  <div class="legend-item"><span class="legend-swatch dashed"></span> scheduled promotion (Staging → QA → PROD)</div>
   <div class="legend-item"><span class="legend-dot"></span> yellow pulse = data flowing down</div>
   <div class="legend-item"><span class="legend-dot" style="background:var(--cream)"></span> white pulse = requests flowing up</div>
   <div class="legend-item"><span class="legend-swatch yellow"></span> selected drum's connections</div>
