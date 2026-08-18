@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Spatial Distortion — Live Drum Rig</title>
+<title>Spatial Distortion — Live Rig</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
@@ -16,6 +16,8 @@
     --purple:#9b5de0;
     --purple-soft:rgba(155,93,224,0.4);
     --yellow:#f5e63e;
+    --teal:#2fe0c9;
+    --teal-soft:rgba(47,224,201,0.4);
     --yellow-soft:rgba(245,230,62,0.45);
     --cream:#f2ede2;
     --text-dim:#b9b2a6;
@@ -136,7 +138,8 @@
   .node .rim{ fill:var(--drum-head); stroke-width:9; transition:stroke 0.25s ease, filter 0.25s ease; }
   .node.row-qa .rim{ stroke:var(--pink); }
   .node.row-prd .rim{ stroke:var(--purple); }
-  .node.row-public .rim, .node.row-apps .rim{ stroke:var(--yellow); }
+  .node.row-public .rim{ stroke:var(--yellow); }
+  .node.row-apps .rim{ stroke:var(--teal); }
   .node .head{ fill:url(#headSheen); stroke:#000; stroke-width:2; }
   .node .lug{ fill:var(--metal); opacity:0.85; }
   .node:hover .head{ fill:var(--drum-head-hi); }
@@ -211,7 +214,7 @@
 <body>
 
 <header>
-  <div class="eyebrow">🥁 Spatial Distortion — Live Drum Rig</div>
+  <div class="eyebrow">🥁 Spatial Distortion — Live Rig</div>
   <h1>QA &amp; Production Architecture</h1>
   <p class="subhead">Every box is a drum in the kit. Click one to hear what it does. Edits land in Staging, then flow to QA, then PRD, on a schedule — nobody edits QA or PRD direct.</p>
 </header>
@@ -242,7 +245,7 @@
         <rect x="0" y="680" width="1900" height="460" rx="18" fill="#9b5de0" opacity="0.045"></rect>
       </g>
       <text class="row-label" fill="#ff2f6e" transform="rotate(-90 26,350)" x="26" y="350" text-anchor="middle">QA SIDE</text>
-      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,920)" x="26" y="920" text-anchor="middle">PROD SIDE</text>
+      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,920)" x="26" y="920" text-anchor="middle">PRD SIDE</text>
 
       <g id="connectors"></g>
       <g id="nodes"></g>
