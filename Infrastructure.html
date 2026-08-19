@@ -18,6 +18,8 @@
     --yellow:#f5e63e;
     --teal:#2fe0c9;
     --teal-soft:rgba(47,224,201,0.4);
+    --orange:#ff8c3c;
+    --orange-soft:rgba(255,140,60,0.4);
     --yellow-soft:rgba(245,230,62,0.45);
     --cream:#f2ede2;
     --text-dim:#b9b2a6;
@@ -99,10 +101,35 @@
     min-width:0;
     display:flex;
     align-items:flex-start;
-    overflow-x:auto;
-    overflow-y:auto;
+    overflow:hidden;
+    cursor:grab;
+    touch-action:none;
   }
+  .diagram-wrap.panning{ cursor:grabbing; }
   svg#diagram{ width:100%; min-width:900px; height:auto; display:block; overflow:visible; flex-shrink:0; }
+
+  .zoom-controls{
+    position:absolute;
+    right:clamp(14px,2.5vw,30px);
+    bottom:20px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    z-index:10;
+  }
+  .zoom-controls button{
+    width:34px; height:34px;
+    background:#151316;
+    border:2px solid var(--cream);
+    color:var(--cream);
+    font-family:var(--font-mono);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    border-radius:2px;
+  }
+  .zoom-controls button:hover{ border-color:var(--yellow); color:var(--yellow); }
+  .zoom-controls button.reset{ font-size:13px; }
 
   .grid-bg{
     position:absolute;
@@ -138,7 +165,7 @@
   .node .rim{ fill:var(--drum-head); stroke-width:9; transition:stroke 0.25s ease, filter 0.25s ease; }
   .node.row-qa .rim{ stroke:var(--pink); }
   .node.row-prd .rim{ stroke:var(--purple); }
-  .node.row-public .rim{ stroke:var(--yellow); }
+  .node.row-public .rim{ stroke:var(--orange); }
   .node.row-apps .rim{ stroke:var(--teal); }
   .node .head{ fill:url(#headSheen); stroke:#000; stroke-width:2; }
   .node .lug{ fill:var(--metal); opacity:0.85; }
@@ -240,16 +267,23 @@
         </radialGradient>
       </defs>
 
-      <g class="row-band">
-        <rect x="0" y="20" width="1900" height="660" rx="18" fill="#ff2f6e" opacity="0.045"></rect>
-        <rect x="0" y="680" width="1900" height="600" rx="18" fill="#9b5de0" opacity="0.045"></rect>
-      </g>
-      <text class="row-label" fill="#ff2f6e" transform="rotate(-90 26,350)" x="26" y="350" text-anchor="middle">QA SIDE</text>
-      <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,980)" x="26" y="980" text-anchor="middle">PROD SIDE</text>
+      <g id="viewport">
+        <g class="row-band">
+          <rect x="0" y="20" width="1900" height="660" rx="18" fill="#ff2f6e" opacity="0.045"></rect>
+          <rect x="0" y="680" width="1900" height="600" rx="18" fill="#9b5de0" opacity="0.045"></rect>
+        </g>
+        <text class="row-label" fill="#ff2f6e" transform="rotate(-90 26,350)" x="26" y="350" text-anchor="middle">QA SIDE</text>
+        <text class="row-label" fill="#9b5de0" transform="rotate(-90 26,980)" x="26" y="980" text-anchor="middle">PROD SIDE</text>
 
-      <g id="connectors"></g>
-      <g id="nodes"></g>
+        <g id="connectors"></g>
+        <g id="nodes"></g>
+      </g>
     </svg>
+    <div class="zoom-controls">
+      <button id="zoomIn" title="Zoom in">+</button>
+      <button id="zoomOut" title="Zoom out">−</button>
+      <button id="zoomReset" class="reset" title="Reset view">⟲</button>
+    </div>
   </div>
 
   <aside id="panel">
@@ -277,15 +311,15 @@
 <script>
   // ---------- Node layout (drumheads) ----------
   const NODES = [
-    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs"]},
+    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs + SDE"]},
     {id:"qadb", cx:115, cy:286, r:88, row:"qa", tag:"QA", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
     {id:"qa01", cx:430, cy:203, r:68, row:"qa", tag:"QA", title:"gissvr-qa-01", subtitle:["Standalone Server"]},
     {id:"qa02", cx:430, cy:369, r:68, row:"qa", tag:"QA", title:"gissvr-qa-02", subtitle:["Standalone Server"]},
     {id:"qads", cx:730, cy:286, r:68, row:"qa", tag:"QA", title:"gisent-qa-ds", subtitle:["Server + Data Store"]},
     {id:"qaportal", cx:1000, cy:286, r:88, row:"qa", tag:"QA", title:"gisent-qa-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
     {id:"qaservice", cx:1290, cy:286, r:68, row:"qa", tag:"API · QA", title:"Service APIs", subtitle:["Behind Azure Gateway"]},
-    {id:"qagateway", cx:1520, cy:286, r:68, row:"qa", tag:"Edge · QA", title:"Azure Gateway", subtitle:["Public entry point"]},
-    {id:"qawsrb", cx:1740, cy:286, r:72, row:"qa", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
+    {id:"qagateway", cx:1740, cy:286, r:68, row:"qa", tag:"Edge · QA", title:"Azure Gateway", subtitle:["Public entry point"]},
+    {id:"qawsrb", cx:1520, cy:286, r:72, row:"qa", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
 
     {id:"agol", cx:430, cy:545, r:80, row:"public", tag:"Public", title:"ArcGIS Online", subtitle:["Org site"]},
 
@@ -295,8 +329,8 @@
     {id:"prdds", cx:730, cy:804, r:68, row:"prd", tag:"PRD", title:"gisent-prd-ds", subtitle:["Server + Data Store"]},
     {id:"prdportal", cx:1000, cy:804, r:88, row:"prd", tag:"PRD", title:"gisent-prd-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
     {id:"prdservice", cx:1290, cy:804, r:68, row:"prd", tag:"API · PRD", title:"Service APIs", subtitle:["Behind Azure Gateway"]},
-    {id:"prdgateway", cx:1520, cy:804, r:68, row:"prd", tag:"Edge · PRD", title:"Azure Gateway", subtitle:["Public entry point"]},
-    {id:"prdwsrb", cx:1740, cy:804, r:72, row:"prd", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
+    {id:"prdgateway", cx:1740, cy:804, r:68, row:"prd", tag:"Edge · PRD", title:"Azure Gateway", subtitle:["Public entry point"]},
+    {id:"prdwsrb", cx:1520, cy:804, r:72, row:"prd", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
 
     {id:"internalapps", cx:1000, cy:1150, r:84, row:"apps", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
   ];
@@ -311,8 +345,8 @@
     {id:"qads-qaportal", from:"qads", to:"qaportal", row:"qa", bidir:true, d:"M798,286 L912,286"},
     {id:"qa01-qaservice", from:"qa01", to:"qaservice", row:"qa", d:"M498,203 C750,143 1050,143 1290,218"},
     {id:"qa02-qaservice", from:"qa02", to:"qaservice", row:"qa", d:"M498,369 C750,433 1050,433 1290,354"},
-    {id:"qaservice-qagateway", from:"qaservice", to:"qagateway", row:"qa", d:"M1358,286 L1452,286"},
-    {id:"qagateway-qawsrb", from:"qagateway", to:"qawsrb", row:"qa", d:"M1588,286 L1668,286"},
+    {id:"qaservice-qawsrb", from:"qaservice", to:"qawsrb", row:"qa", d:"M1358,286 L1448,286"},
+    {id:"qagateway-qawsrb", from:"qagateway", to:"qawsrb", row:"qa", d:"M1672,286 L1592,286"},
     {id:"qa01-agol", from:"qa01", to:"agol", row:"qa", d:"M430,271 C560,283 560,465 430,465"},
     {id:"qa02-agol", from:"qa02", to:"agol", row:"qa", d:"M430,437 L430,465"},
 
@@ -324,8 +358,8 @@
     {id:"prdds-prdportal", from:"prdds", to:"prdportal", row:"prd", bidir:true, d:"M798,804 L912,804"},
     {id:"prd01-prdservice", from:"prd01", to:"prdservice", row:"prd", d:"M498,721 C750,661 1050,661 1290,736"},
     {id:"prd02-prdservice", from:"prd02", to:"prdservice", row:"prd", d:"M498,887 C750,951 1050,951 1290,872"},
-    {id:"prdservice-prdgateway", from:"prdservice", to:"prdgateway", row:"prd", d:"M1358,804 L1452,804"},
-    {id:"prdgateway-prdwsrb", from:"prdgateway", to:"prdwsrb", row:"prd", d:"M1588,804 L1668,804"},
+    {id:"prdservice-prdwsrb", from:"prdservice", to:"prdwsrb", row:"prd", d:"M1358,804 L1448,804"},
+    {id:"prdgateway-prdwsrb", from:"prdgateway", to:"prdwsrb", row:"prd", d:"M1672,804 L1592,804"},
     {id:"prd01-agol", from:"prd01", to:"agol", row:"prd", d:"M430,653 L430,625"},
     {id:"prd02-agol", from:"prd02", to:"agol", row:"prd", d:"M430,819 C560,819 560,625 430,625"},
 
@@ -359,17 +393,17 @@
       description:"The QA Portal for ArcGIS site. Federated with gisent-qa-ds, it's where QA content is organized, shared, and secured while it's being built and validated — before anything is promoted toward Production.",
       flows:[{dir:"bi", label:"gisent-qa-ds (federation)"}] },
     qaservice: { tag:"API · QA", title:"Service APIs (QA)", subtitle:"Behind Azure Gateway",
-      summary:"Packages data from the standalone servers, sitting behind the Azure Gateway.",
-      description:"APIs that package data coming straight off gissvr-qa-01 and gissvr-qa-02. They run behind the Azure Gateway rather than being exposed directly — the gateway is what's actually reachable from outside.",
-      flows:[{dir:"in", label:"gissvr-qa-01 / 02"},{dir:"out", label:"Azure Gateway (QA)"}] },
+      summary:"Packages data from the standalone servers, straight out to WSRB's apps.",
+      description:"APIs that package data coming straight off gissvr-qa-01 and gissvr-qa-02, and serve it directly to WSRB's front-end apps.",
+      flows:[{dir:"in", label:"gissvr-qa-01 / 02"},{dir:"out", label:"WSRB Apps (QA)"}] },
     qagateway: { tag:"Edge · QA", title:"Azure Gateway (QA)", subtitle:"Public entry point",
       summary:"The externally-facing edge for QA — what WSRB's apps actually talk to.",
-      description:"The public-facing entry point for QA. It sits in front of the Service APIs, which in turn sit in front of the standalone servers — WSRB's front-end apps only ever talk to this gateway, never directly to what's behind it.",
-      flows:[{dir:"in", label:"Service APIs (QA)"},{dir:"out", label:"WSRB Apps (QA)"}] },
+      description:"The public-facing entry point for QA, sitting alongside the Service APIs as a second, dedicated connection point for WSRB's front-end apps.",
+      flows:[{dir:"bi", label:"WSRB Apps (QA)"}] },
     qawsrb: { tag:"Consumer", title:"WSRB Front-End Apps (QA)", subtitle:"Test / staging",
       summary:"WSRB's front-end apps, pointed at QA for testing.",
-      description:"WSRB's front-end applications, pointed at the QA Azure Gateway so new data and features can be tested before they go live in Production.",
-      flows:[{dir:"in", label:"Azure Gateway (QA)"}] },
+      description:"WSRB's front-end applications, connected to both the QA Azure Gateway and the QA Service APIs directly, so new data and features can be tested before they go live in Production.",
+      flows:[{dir:"in", label:"Azure Gateway (QA)"},{dir:"in", label:"Service APIs (QA)"}] },
     agol: { tag:"Public", title:"ArcGIS Online", subtitle:"Org site",
       summary:"Pulls data from all four standalone servers, QA and PRD alike.",
       description:"Our ArcGIS Online organization site. It pulls data directly from all four standalone servers — gissvr-qa-01, gissvr-qa-02, gissvr-prd-01, and gissvr-prd-02 — giving it a foot in both environments rather than going through either portal.",
@@ -395,17 +429,17 @@
       description:"The production Portal for ArcGIS site. Federated with gisent-prd-ds, it's the one and only place our internal web apps — PropertyGuru, Building Selection, and Key Layers — are hosted and shared from.",
       flows:[{dir:"bi", label:"gisent-prd-ds (federation)"},{dir:"out", label:"Internal Web Apps"}] },
     prdservice: { tag:"API · PRD", title:"Service APIs (PRD)", subtitle:"Behind Azure Gateway",
-      summary:"Packages live data from the standalone servers, sitting behind the Azure Gateway.",
-      description:"APIs that package live data coming straight off gissvr-prd-01 and gissvr-prd-02. They run behind the Azure Gateway rather than being exposed directly — the gateway is what's actually reachable from outside.",
-      flows:[{dir:"in", label:"gissvr-prd-01 / 02"},{dir:"out", label:"Azure Gateway (PRD)"}] },
+      summary:"Packages live data from the standalone servers, straight out to WSRB's apps.",
+      description:"APIs that package live data coming straight off gissvr-prd-01 and gissvr-prd-02, and serve it directly to WSRB's live front-end apps.",
+      flows:[{dir:"in", label:"gissvr-prd-01 / 02"},{dir:"out", label:"WSRB Apps (PRD)"}] },
     prdgateway: { tag:"Edge · PRD", title:"Azure Gateway (PRD)", subtitle:"Public entry point",
       summary:"The externally-facing edge for Production — what WSRB's live apps actually talk to.",
-      description:"The public-facing entry point for Production. It sits in front of the Service APIs, which in turn sit in front of the standalone servers — WSRB's live front-end apps only ever talk to this gateway, never directly to what's behind it.",
-      flows:[{dir:"in", label:"Service APIs (PRD)"},{dir:"out", label:"WSRB Apps (PRD)"}] },
+      description:"The public-facing entry point for Production, sitting alongside the Service APIs as a second, dedicated connection point for WSRB's live front-end apps.",
+      flows:[{dir:"bi", label:"WSRB Apps (PRD)"}] },
     prdwsrb: { tag:"Consumer", title:"WSRB Front-End Apps (PRD)", subtitle:"Production",
       summary:"WSRB's live, production front-end applications.",
-      description:"WSRB's live, production front-end applications — this is what real users and the public interact with day to day.",
-      flows:[{dir:"in", label:"Azure Gateway (PRD)"}] },
+      description:"WSRB's live, production front-end applications, connected to both the production Azure Gateway and the production Service APIs directly — this is what real users and the public interact with day to day.",
+      flows:[{dir:"in", label:"Azure Gateway (PRD)"},{dir:"in", label:"Service APIs (PRD)"}] },
     internalapps: { tag:"Apps · PRD", title:"Internal Web Apps", subtitle:"PropertyGuru · Building Selection · Key Layers",
       summary:"Our in-house apps, built and hosted on the production portal.",
       description:"Our in-house web applications — PropertyGuru, Building Selection, and Key Layers — built on and hosted through the production Portal (gisent-prd-ptl). Staff use these day to day against live, promoted data.",
@@ -570,7 +604,7 @@
 
   nodes.forEach(node => {
     const id = node.dataset.id;
-    node.addEventListener('click', () => setActive(activeId === id ? null : id));
+    node.addEventListener('click', () => { if(wasDragged) return; setActive(activeId === id ? null : id); });
     node.addEventListener('keydown', (e) => {
       if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); setActive(activeId === id ? null : id); }
     });
@@ -593,6 +627,85 @@
   });
 
   closeBtn.addEventListener('click', () => setActive(null));
+
+  // ---- pan & zoom ----
+  const wrap = document.querySelector('.diagram-wrap');
+  const svgEl = document.getElementById('diagram');
+  const viewport = document.getElementById('viewport');
+  const VB_W = 1900;
+  let panX = 0, panY = 0, scale = 1;
+  const MIN_SCALE = 0.4, MAX_SCALE = 3;
+  let isPanning = false, wasDragged = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+
+  function applyTransform(){
+    viewport.setAttribute('transform', 'translate(' + panX + ',' + panY + ') scale(' + scale + ')');
+  }
+
+  function pxToUnits(px){
+    const rect = svgEl.getBoundingClientRect();
+    return px * (VB_W / rect.width);
+  }
+
+  function beginPan(clientX, clientY){
+    isPanning = true;
+    wasDragged = false;
+    startX = clientX; startY = clientY;
+    startPanX = panX; startPanY = panY;
+    wrap.classList.add('panning');
+  }
+  function movePan(clientX, clientY){
+    if(!isPanning) return;
+    const dxPx = clientX - startX, dyPx = clientY - startY;
+    if(Math.abs(dxPx) > 3 || Math.abs(dyPx) > 3) wasDragged = true;
+    panX = startPanX + pxToUnits(dxPx);
+    panY = startPanY + pxToUnits(dyPx);
+    applyTransform();
+  }
+  function endPan(){
+    isPanning = false;
+    wrap.classList.remove('panning');
+  }
+
+  wrap.addEventListener('mousedown', (e) => { if(e.button !== 0) return; beginPan(e.clientX, e.clientY); });
+  window.addEventListener('mousemove', (e) => movePan(e.clientX, e.clientY));
+  window.addEventListener('mouseup', endPan);
+
+  wrap.addEventListener('touchstart', (e) => {
+    if(e.touches.length === 1) beginPan(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: true });
+  wrap.addEventListener('touchmove', (e) => {
+    if(e.touches.length === 1){ movePan(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }
+  }, { passive: false });
+  wrap.addEventListener('touchend', endPan);
+
+  function zoomAt(clientX, clientY, factor){
+    const rect = svgEl.getBoundingClientRect();
+    const mouseSvgX = (clientX - rect.left) * (VB_W / rect.width);
+    const mouseSvgY = (clientY - rect.top) * (VB_W / rect.width);
+    const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+    panX = mouseSvgX - (newScale / scale) * (mouseSvgX - panX);
+    panY = mouseSvgY - (newScale / scale) * (mouseSvgY - panY);
+    scale = newScale;
+    applyTransform();
+  }
+
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, e.deltaY < 0 ? 1.12 : 0.89);
+  }, { passive: false });
+
+  document.getElementById('zoomIn').addEventListener('click', () => {
+    const rect = wrap.getBoundingClientRect();
+    zoomAt(rect.left + rect.width/2, rect.top + rect.height/2, 1.25);
+  });
+  document.getElementById('zoomOut').addEventListener('click', () => {
+    const rect = wrap.getBoundingClientRect();
+    zoomAt(rect.left + rect.width/2, rect.top + rect.height/2, 0.8);
+  });
+  document.getElementById('zoomReset').addEventListener('click', () => {
+    panX = 0; panY = 0; scale = 1;
+    applyTransform();
+  });
 </script>
 
 </body>
