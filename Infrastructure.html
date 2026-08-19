@@ -177,6 +177,21 @@
   .node .title{ font-family:var(--font-display); font-weight:400; letter-spacing:0.01em; fill:var(--cream); text-anchor:middle; text-transform:uppercase; }
   .node .subtitle{ font-family:var(--font-mono); fill:var(--text-dim); text-anchor:middle; }
 
+  /* cymbal variant — gateways, apps, databases */
+  .node.cymbal .ring{ fill:none; stroke-width:6; transition:stroke 0.25s ease, filter 0.25s ease; }
+  .node.cymbal.row-qa .ring{ stroke:var(--pink); }
+  .node.cymbal.row-prd .ring{ stroke:var(--purple); }
+  .node.cymbal.row-public .ring{ stroke:var(--orange); }
+  .node.cymbal.row-apps .ring{ stroke:var(--teal); }
+  .node.cymbal .disc{ fill:url(#cymbalSheen); stroke:#3a2a0e; stroke-width:1.5; }
+  .node.cymbal .groove{ fill:none; stroke:rgba(50,32,8,0.4); stroke-width:1.2; }
+  .node.cymbal:hover .disc{ filter:brightness(1.08); }
+  .node.cymbal.active .ring{ stroke:var(--yellow); filter:drop-shadow(0 0 12px var(--yellow-soft)); }
+  .node.cymbal:focus-visible .ring{ stroke:var(--yellow); }
+  .node.cymbal .tag{ fill:rgba(36,24,8,0.65); }
+  .node.cymbal .title{ fill:#241a08; }
+  .node.cymbal .subtitle{ fill:rgba(36,24,8,0.75); }
+
   #tooltip{
     position:fixed; pointer-events:none;
     background:#151316; border:2px solid var(--cream);
@@ -265,6 +280,11 @@
           <stop offset="60%" stop-color="#1c1c1f"></stop>
           <stop offset="100%" stop-color="#141416"></stop>
         </radialGradient>
+        <radialGradient id="cymbalSheen" cx="38%" cy="30%" r="80%">
+          <stop offset="0%" stop-color="#f2ce7f"></stop>
+          <stop offset="45%" stop-color="#cf9e42"></stop>
+          <stop offset="100%" stop-color="#8a6423"></stop>
+        </radialGradient>
       </defs>
 
       <g id="viewport">
@@ -311,28 +331,28 @@
 <script>
   // ---------- Node layout (drumheads) ----------
   const NODES = [
-    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs"]},
-    {id:"qadb", cx:115, cy:286, r:88, row:"qa", tag:"QA", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
+    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", shape:"cymbal", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs"]},
+    {id:"qadb", cx:115, cy:286, r:88, row:"qa", shape:"cymbal", tag:"QA", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
     {id:"qa01", cx:430, cy:203, r:68, row:"qa", tag:"QA", title:"gissvr-qa-01", subtitle:["Standalone Server"]},
     {id:"qa02", cx:430, cy:369, r:68, row:"qa", tag:"QA", title:"gissvr-qa-02", subtitle:["Standalone Server"]},
     {id:"qads", cx:730, cy:286, r:68, row:"qa", tag:"QA", title:"gisent-qa-ds", subtitle:["Server + Data Store"]},
     {id:"qaportal", cx:1000, cy:286, r:88, row:"qa", tag:"QA", title:"gisent-qa-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
     {id:"qaservice", cx:1290, cy:286, r:68, row:"qa", tag:"API · QA", title:"Service APIs", subtitle:["Behind Azure Gateway"]},
-    {id:"qagateway", cx:1740, cy:286, r:68, row:"qa", tag:"QA", title:"Azure Gateway", subtitle:["Public entry point"]},
-    {id:"qawsrb", cx:1520, cy:286, r:72, row:"qa", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
+    {id:"qagateway", cx:1740, cy:286, r:68, row:"qa", shape:"cymbal", tag:"QA", title:"Azure Gateway", subtitle:["Public entry point"]},
+    {id:"qawsrb", cx:1520, cy:286, r:72, row:"qa", shape:"cymbal", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
 
-    {id:"agol", cx:430, cy:545, r:80, row:"public", tag:"Public", title:"ArcGIS Online", subtitle:["Org site"]},
+    {id:"agol", cx:430, cy:545, r:80, row:"public", shape:"cymbal", tag:"Public", title:"ArcGIS Online", subtitle:["Org site"]},
 
-    {id:"prddb", cx:115, cy:804, r:88, row:"prd", tag:"PRD", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
+    {id:"prddb", cx:115, cy:804, r:88, row:"prd", shape:"cymbal", tag:"PRD", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
     {id:"prd01", cx:430, cy:721, r:68, row:"prd", tag:"PRD", title:"gissvr-prd-01", subtitle:["Standalone Server"]},
     {id:"prd02", cx:430, cy:887, r:68, row:"prd", tag:"PRD", title:"gissvr-prd-02", subtitle:["Standalone Server"]},
     {id:"prdds", cx:730, cy:804, r:68, row:"prd", tag:"PRD", title:"gisent-prd-ds", subtitle:["Server + Data Store"]},
     {id:"prdportal", cx:1000, cy:804, r:88, row:"prd", tag:"PRD", title:"gisent-prd-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
     {id:"prdservice", cx:1290, cy:804, r:68, row:"prd", tag:"API · PRD", title:"Service APIs", subtitle:["Behind Azure Gateway"]},
-    {id:"prdgateway", cx:1740, cy:804, r:68, row:"prd", tag:"PRD", title:"Azure Gateway", subtitle:["Public entry point"]},
-    {id:"prdwsrb", cx:1520, cy:804, r:72, row:"prd", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
+    {id:"prdgateway", cx:1740, cy:804, r:68, row:"prd", shape:"cymbal", tag:"PRD", title:"Azure Gateway", subtitle:["Public entry point"]},
+    {id:"prdwsrb", cx:1520, cy:804, r:72, row:"prd", shape:"cymbal", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
 
-    {id:"internalapps", cx:1000, cy:1150, r:84, row:"apps", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
+    {id:"internalapps", cx:1000, cy:1150, r:84, row:"apps", shape:"cymbal", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
   ];
 
   // ---------- Connectors ----------
@@ -534,15 +554,24 @@
   }
 
   NODES.forEach(n => {
-    const g = el('g', { class: 'node row-' + n.row, id: 'node-' + n.id, 'data-id': n.id, tabindex: '0', transform: 'translate(' + n.cx + ',' + n.cy + ')' });
+    const isCymbal = n.shape === 'cymbal';
+    const g = el('g', { class: 'node row-' + n.row + (isCymbal ? ' cymbal' : ''), id: 'node-' + n.id, 'data-id': n.id, tabindex: '0', transform: 'translate(' + n.cx + ',' + n.cy + ')' });
 
-    g.appendChild(el('circle', { class:'rim', r: n.r, fill: 'var(--drum-head)' }));
-    g.appendChild(el('circle', { class:'head', r: n.r - 10 }));
-
-    const lugCount = n.r > 80 ? 12 : 9;
-    lugPoints(n.r, lugCount).forEach(([lx,ly]) => {
-      g.appendChild(el('circle', { class:'lug', cx:lx, cy:ly, r:3.2 }));
-    });
+    if(isCymbal){
+      g.appendChild(el('circle', { class:'disc', r: n.r - 4 }));
+      const grooveCount = 4;
+      for(let i=1;i<=grooveCount;i++){
+        g.appendChild(el('circle', { class:'groove', r: (n.r - 10) * (i / (grooveCount + 1)) + 6 }));
+      }
+      g.appendChild(el('circle', { class:'ring', r: n.r }));
+    } else {
+      g.appendChild(el('circle', { class:'rim', r: n.r, fill: 'var(--drum-head)' }));
+      g.appendChild(el('circle', { class:'head', r: n.r - 10 }));
+      const lugCount = n.r > 80 ? 12 : 9;
+      lugPoints(n.r, lugCount).forEach(([lx,ly]) => {
+        g.appendChild(el('circle', { class:'lug', cx:lx, cy:ly, r:3.2 }));
+      });
+    }
 
     // text block, vertically centered
     const lines = [];
