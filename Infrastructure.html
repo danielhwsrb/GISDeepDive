@@ -311,14 +311,14 @@
 <script>
   // ---------- Node layout (drumheads) ----------
   const NODES = [
-    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs + SDE"]},
+    {id:"stagingdb", cx:115, cy:100, r:68, row:"qa", tag:"Staging", title:"Staging GIS DB", subtitle:["File GDBs"]},
     {id:"qadb", cx:115, cy:286, r:88, row:"qa", tag:"QA", title:"Enterprise DB", subtitle:["File GDBs + SDE"]},
     {id:"qa01", cx:430, cy:203, r:68, row:"qa", tag:"QA", title:"gissvr-qa-01", subtitle:["Standalone Server"]},
     {id:"qa02", cx:430, cy:369, r:68, row:"qa", tag:"QA", title:"gissvr-qa-02", subtitle:["Standalone Server"]},
     {id:"qads", cx:730, cy:286, r:68, row:"qa", tag:"QA", title:"gisent-qa-ds", subtitle:["Server + Data Store"]},
     {id:"qaportal", cx:1000, cy:286, r:88, row:"qa", tag:"QA", title:"gisent-qa-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
     {id:"qaservice", cx:1290, cy:286, r:68, row:"qa", tag:"API · QA", title:"Service APIs", subtitle:["Behind Azure Gateway"]},
-    {id:"qagateway", cx:1740, cy:286, r:68, row:"qa", tag:"Edge · QA", title:"Azure Gateway", subtitle:["Public entry point"]},
+    {id:"qagateway", cx:1740, cy:286, r:68, row:"qa", tag:"QA", title:"Azure Gateway", subtitle:["Public entry point"]},
     {id:"qawsrb", cx:1520, cy:286, r:72, row:"qa", tag:"Consumer", title:"WSRB Apps", subtitle:["QA / test"]},
 
     {id:"agol", cx:430, cy:545, r:80, row:"public", tag:"Public", title:"ArcGIS Online", subtitle:["Org site"]},
@@ -329,7 +329,7 @@
     {id:"prdds", cx:730, cy:804, r:68, row:"prd", tag:"PRD", title:"gisent-prd-ds", subtitle:["Server + Data Store"]},
     {id:"prdportal", cx:1000, cy:804, r:88, row:"prd", tag:"PRD", title:"gisent-prd-ptl", subtitle:["Portal for ArcGIS","(Federated)"]},
     {id:"prdservice", cx:1290, cy:804, r:68, row:"prd", tag:"API · PRD", title:"Service APIs", subtitle:["Behind Azure Gateway"]},
-    {id:"prdgateway", cx:1740, cy:804, r:68, row:"prd", tag:"Edge · PRD", title:"Azure Gateway", subtitle:["Public entry point"]},
+    {id:"prdgateway", cx:1740, cy:804, r:68, row:"prd", tag:"PRD", title:"Azure Gateway", subtitle:["Public entry point"]},
     {id:"prdwsrb", cx:1520, cy:804, r:72, row:"prd", tag:"Consumer", title:"WSRB Apps", subtitle:["Production"]},
 
     {id:"internalapps", cx:1000, cy:1150, r:84, row:"apps", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
@@ -368,7 +368,7 @@
 
   // ---------- Panel descriptions ----------
   const DATA = {
-    stagingdb: { tag:"Staging", title:"Staging GIS DB", subtitle:"File GDBs + SDE",
+    stagingdb: { tag:"Staging", title:"Staging GIS DB", subtitle:"File GDBs",
       summary:"Where edits land first, before promotion to QA.",
       description:"A holding database that takes edits directly from staff working in ArcGIS Pro. Nothing downstream touches this data directly — on a schedule, its contents are promoted into the QA Enterprise Database, keeping raw in-progress edits separate from anything QA servers or apps are serving.",
       flows:[{dir:"out", label:"Promoted → Enterprise DB (QA)"}] },
@@ -396,7 +396,7 @@
       summary:"Packages data from the standalone servers, straight out to WSRB's apps.",
       description:"APIs that package data coming straight off gissvr-qa-01 and gissvr-qa-02, and serve it directly to WSRB's front-end apps.",
       flows:[{dir:"in", label:"gissvr-qa-01 / 02"},{dir:"out", label:"WSRB Apps (QA)"}] },
-    qagateway: { tag:"Edge · QA", title:"Azure Gateway (QA)", subtitle:"Public entry point",
+    qagateway: { tag:"QA", title:"Azure Gateway (QA)", subtitle:"Public entry point",
       summary:"The externally-facing edge for QA — what WSRB's apps actually talk to.",
       description:"The public-facing entry point for QA, sitting alongside the Service APIs as a second, dedicated connection point for WSRB's front-end apps.",
       flows:[{dir:"bi", label:"WSRB Apps (QA)"}] },
@@ -432,7 +432,7 @@
       summary:"Packages live data from the standalone servers, straight out to WSRB's apps.",
       description:"APIs that package live data coming straight off gissvr-prd-01 and gissvr-prd-02, and serve it directly to WSRB's live front-end apps.",
       flows:[{dir:"in", label:"gissvr-prd-01 / 02"},{dir:"out", label:"WSRB Apps (PRD)"}] },
-    prdgateway: { tag:"Edge · PRD", title:"Azure Gateway (PRD)", subtitle:"Public entry point",
+    prdgateway: { tag:"PRD", title:"Azure Gateway (PRD)", subtitle:"Public entry point",
       summary:"The externally-facing edge for Production — what WSRB's live apps actually talk to.",
       description:"The public-facing entry point for Production, sitting alongside the Service APIs as a second, dedicated connection point for WSRB's live front-end apps.",
       flows:[{dir:"bi", label:"WSRB Apps (PRD)"}] },
