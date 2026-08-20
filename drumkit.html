@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spatial Distortion — The Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Special+Elite&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0d;
+    --bg-deep:#040404;
+    --pink:#ff2f6e;
+    --pink-soft:rgba(255,47,110,0.4);
+    --purple:#9b5de0;
+    --purple-soft:rgba(155,93,224,0.4);
+    --yellow:#f5e63e;
+    --teal:#2fe0c9;
+    --orange:#ff8c3c;
+    --cream:#f2ede2;
+    --text-dim:#b9b2a6;
+    --text-faint:#65605a;
+    --drum-head:#1c1c1f;
+    --drum-head-hi:#2a2a2e;
+    --metal:#cfcfcf;
+    --font-display:'Anton', 'Oswald', sans-serif;
+    --font-mono:'Special Elite', 'Courier New', monospace;
+    --font-ui:'Oswald', sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 0%, #1a0f16 0%, var(--bg) 45%, var(--bg-deep) 100%);
+    color:var(--cream);
+    font-family:var(--font-ui);
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  header{
+    position:relative;
+    padding:24px clamp(16px,3vw,40px) 14px;
+    border-bottom:3px solid var(--cream);
+    flex-shrink:0;
+    overflow:hidden;
+  }
+  header::before, header::after{
+    content:"";
+    position:absolute;
+    top:-20px; bottom:-20px;
+    width:46%;
+    transform:skewX(-18deg);
+    z-index:0;
+    opacity:0.12;
+  }
+  header::before{ left:-6%; background:var(--pink); }
+  header::after{ right:-6%; background:var(--purple); }
+  header > *{ position:relative; z-index:1; }
+
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    color:var(--yellow);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  h1{
+    margin:0;
+    font-family:var(--font-display);
+    font-weight:400;
+    font-size:clamp(26px,4vw,42px);
+    letter-spacing:0.01em;
+    text-transform:uppercase;
+    color:var(--cream);
+    text-shadow: 3px 3px 0 var(--pink), 6px 6px 0 rgba(0,0,0,0.5);
+  }
+  .subhead{
+    margin:8px 0 0;
+    font-size:13.5px;
+    color:var(--text-dim);
+    max-width:720px;
+    line-height:1.55;
+    font-family:var(--font-mono);
+  }
+
+  main{
+    flex:1;
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px clamp(6px,2vw,24px);
+    overflow:hidden;
+    cursor:grab;
+    touch-action:none;
+  }
+  main.panning{ cursor:grabbing; }
+
+  .grid-bg{
+    position:absolute;
+    inset:0;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size:16px 16px;
+    pointer-events:none;
+  }
+
+  svg#kit{ width:100%; max-width:1300px; height:auto; display:block; overflow:visible; }
+
+  .piece{ cursor:pointer; }
+  .piece .rim{ fill:var(--drum-head); stroke-width:9; transition:filter 0.2s ease; }
+  .piece .head{ fill:url(#headSheen); stroke:#000; stroke-width:2; }
+  .piece .lug{ fill:var(--metal); opacity:0.85; }
+  .piece .ring{ fill:none; stroke-width:6; transition:filter 0.2s ease; }
+  .piece .disc{ fill:url(#cymbalSheen); stroke:#3a2a0e; stroke-width:1.5; }
+  .piece .groove{ fill:none; stroke:rgba(50,32,8,0.4); stroke-width:1.2; }
+  .piece:hover .head{ fill:var(--drum-head-hi); }
+  .piece:hover .disc{ filter:brightness(1.08); }
+  .piece:hover .rim, .piece:hover .ring{ filter:drop-shadow(0 0 10px rgba(245,230,62,0.35)); }
+  .stand{ stroke:#4a4a4e; stroke-width:5; stroke-linecap:round; }
+  .leg{ stroke:#4a4a4e; stroke-width:6; stroke-linecap:round; }
+
+  .piece .label{
+    font-family:var(--font-display);
+    font-weight:400;
+    text-transform:uppercase;
+    text-anchor:middle;
+    letter-spacing:0.02em;
+  }
+  .piece.cymbal .label{ fill:#241a08; }
+  .piece.drum .label{ fill:var(--cream); }
+
+  #tooltip{
+    position:fixed; pointer-events:none;
+    background:#151316; border:2px solid var(--cream);
+    color:var(--cream); font-size:12.5px; padding:8px 12px; border-radius:2px;
+    font-family:var(--font-mono);
+    box-shadow:5px 5px 0 rgba(0,0,0,0.5);
+    opacity:0; transform:translateY(4px) rotate(-1deg);
+    transition:opacity 0.15s ease, transform 0.15s ease;
+    z-index:50;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+  }
+  #tooltip.show{ opacity:1; transform:translateY(0) rotate(-1deg); }
+
+  footer{
+    flex-shrink:0; padding:12px clamp(16px,3vw,40px) 18px;
+    border-top:3px solid var(--cream);
+    font-family:var(--font-mono); font-size:11px; color:var(--text-dim);
+    text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">🥁 Spatial Distortion — Behind the Kit</div>
+  <h1>The Rig</h1>
+  <p class="subhead">A 6-piece kit — kick, snare, two rack toms, two floor toms — plus hi-hat and crash on the left, ride and double crash on the right.</p>
+</header>
+
+<main>
+  <div class="grid-bg"></div>
+  <svg id="kit" viewBox="270 100 1130 740" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="headSheen" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#333338"></stop>
+        <stop offset="60%" stop-color="#1c1c1f"></stop>
+        <stop offset="100%" stop-color="#141416"></stop>
+      </radialGradient>
+      <radialGradient id="cymbalSheen" cx="38%" cy="30%" r="80%">
+        <stop offset="0%" stop-color="#f2ce7f"></stop>
+        <stop offset="45%" stop-color="#cf9e42"></stop>
+        <stop offset="100%" stop-color="#8a6423"></stop>
+      </radialGradient>
+    </defs>
+    <g id="stands"></g>
+    <g id="pieces"></g>
+  </svg>
+</main>
+
+<footer>Click nothing, just admire it. Hover any piece for its name.</footer>
+
+<div id="tooltip"></div>
+
+<script>
+  // shape: 'drum' or 'cymbal'. ring/rim color is purely decorative here.
+  const PIECES = [
+    { id:"kick", label:"Kick", shape:"drum", cx:635, cy:285, w:310, h:228, rect:true, color:"var(--pink)" },
+    { id:"tom1", label:"Rack Tom 1", shape:"drum", cx:555, cy:290, r:80, color:"var(--pink)" },
+    { id:"tom2", label:"Rack Tom 2", shape:"drum", cx:735, cy:285, r:95, color:"var(--pink)" },
+
+    { id:"snare", label:"Snare Drum", shape:"drum", cx:548, cy:517, r:85, color:"var(--pink)" },
+    { id:"floor1", label:"Floor Tom 1", shape:"drum", cx:878, cy:538, r:130, color:"var(--pink)", legs:true },
+    { id:"floor2", label:"Floor Tom 2", shape:"drum", cx:1077, cy:695, r:125, color:"var(--pink)", legs:true },
+
+    { id:"stool", label:"Stool", shape:"drum", cx:697, cy:663, r:57, color:"var(--pink)", plain:true },
+
+    { id:"crash_l", label:"Crash Cymbal", shape:"cymbal", cx:410, cy:285, r:85, color:"var(--teal)", stand:true },
+    { id:"hihat_top", label:"Hi-Hat", shape:"cymbal", cx:388, cy:500, r:85, color:"var(--teal)", stand:true },
+    { id:"ride", label:"Ride Cymbal", shape:"cymbal", cx:915, cy:245, r:113, color:"var(--teal)", stand:true },
+    { id:"crash_r1", label:"Crash Cymbal", shape:"cymbal", cx:1085, cy:430, r:105, color:"var(--teal)", stand:true },
+    { id:"crash_r2", label:"Crash Cymbal", shape:"cymbal", cx:1260, cy:525, r:110, color:"var(--teal)", stand:true }
+  ];
+
+  const svgNS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs){
+    const e = document.createElementNS(svgNS, tag);
+    for(const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  const standsG = document.getElementById('stands');
+  const piecesG = document.getElementById('pieces');
+  const FLOOR_Y = 910;
+
+  function lugPoints(r, count){
+    const pts = [];
+    for(let i=0;i<count;i++){
+      const a = (Math.PI*2*i/count) - Math.PI/2;
+      pts.push([Math.cos(a)*(r-4), Math.sin(a)*(r-4)]);
+    }
+    return pts;
+  }
+
+  PIECES.forEach(p => {
+    if(p.faded) return; // hihat_bottom is just a peek of a second cymbal, drawn as part of hihat_top's group instead
+
+    const isCymbal = p.shape === 'cymbal';
+    const g = el('g', { class: 'piece ' + p.shape, transform: 'translate(' + p.cx + ',' + p.cy + ')' });
+
+    if(isCymbal){
+      g.appendChild(el('circle', { class:'disc', r: p.r - 4 }));
+      for(let i=1;i<=4;i++){
+        g.appendChild(el('circle', { class:'groove', r: (p.r - 10) * (i/5) + 6 }));
+      }
+      g.appendChild(el('circle', { class:'ring', r: p.r, stroke: p.color }));
+    } else if(p.rect){
+      const w = p.w, h = p.h, rx = 18;
+      g.appendChild(el('rect', { class:'rim', x:-w/2, y:-h/2, width:w, height:h, rx:rx, stroke: p.color }));
+      g.appendChild(el('rect', { class:'head', x:-w/2+10, y:-h/2+10, width:w-20, height:h-20, rx:rx-6 }));
+      const lugXs = [-w/2+30, -w/6, w/6, w/2-30];
+      lugXs.forEach(lx => {
+        g.appendChild(el('circle', { class:'lug', cx:lx, cy:-h/2+6, r:4 }));
+        g.appendChild(el('circle', { class:'lug', cx:lx, cy:h/2-6, r:4 }));
+      });
+    } else {
+      g.appendChild(el('circle', { class:'rim', r: p.r, stroke: p.color }));
+      g.appendChild(el('circle', { class:'head', r: p.r - 10 }));
+      if(!p.plain){
+        const lugCount = p.r > 120 ? 16 : (p.r > 85 ? 12 : 9);
+        lugPoints(p.r, lugCount).forEach(([lx,ly]) => {
+          g.appendChild(el('circle', { class:'lug', cx:lx, cy:ly, r: p.r > 120 ? 4 : 3.2 }));
+        });
+      }
+    }
+
+    if(p.label){
+      const sizeMetric = p.rect ? Math.min(p.w, p.h) / 2 : p.r;
+      const fontSize = sizeMetric > 140 ? 20 : (sizeMetric > 90 ? 15 : 12);
+      const words = p.label.split(' ');
+      const lines = words.length > 2 ? [words.slice(0, Math.ceil(words.length/2)).join(' '), words.slice(Math.ceil(words.length/2)).join(' ')] : [p.label];
+      const lh = fontSize + 4;
+      let y = -((lines.length - 1) * lh) / 2;
+      lines.forEach(line => {
+        const t = el('text', { class:'label', x:0, y:y.toFixed(1), 'font-size':fontSize });
+        t.textContent = line;
+        g.appendChild(t);
+        y += lh;
+      });
+    }
+
+    g.addEventListener('mouseenter', (e) => {
+      if(!p.label) return;
+      tooltip.textContent = p.label;
+      tooltip.classList.add('show');
+    });
+    g.addEventListener('mousemove', (e) => {
+      const pad = 16;
+      let x = e.clientX + pad, y = e.clientY + pad;
+      const rect = tooltip.getBoundingClientRect();
+      if(x + rect.width > window.innerWidth - 12) x = e.clientX - rect.width - pad;
+      if(y + rect.height > window.innerHeight - 12) y = e.clientY - rect.height - pad;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+    });
+    g.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+
+    piecesG.appendChild(g);
+  });
+
+  const tooltip = document.getElementById('tooltip');
+
+  // ---- pan & zoom (same feel as the infrastructure diagram) ----
+  const wrap = document.querySelector('main');
+  const svgEl = document.getElementById('kit');
+  const VB_W = 1560;
+  let panX = 0, panY = 0, scale = 1;
+  const MIN_SCALE = 0.5, MAX_SCALE = 3;
+  let isPanning = false, startX = 0, startY = 0, startPanX = 0, startPanY = 0;
+
+  function applyTransform(){
+    svgEl.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + scale + ')';
+  }
+  function pxToUnits(px){
+    const rect = svgEl.getBoundingClientRect();
+    return px;
+  }
+  wrap.addEventListener('mousedown', (e) => {
+    if(e.button !== 0) return;
+    isPanning = true; startX = e.clientX; startY = e.clientY; startPanX = panX; startPanY = panY;
+    wrap.classList.add('panning');
+  });
+  window.addEventListener('mousemove', (e) => {
+    if(!isPanning) return;
+    panX = startPanX + (e.clientX - startX);
+    panY = startPanY + (e.clientY - startY);
+    applyTransform();
+  });
+  window.addEventListener('mouseup', () => { isPanning = false; wrap.classList.remove('panning'); });
+  wrap.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const factor = e.deltaY < 0 ? 1.12 : 0.89;
+    scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+    applyTransform();
+  }, { passive:false });
+</script>
+
+</body>
+</html>
