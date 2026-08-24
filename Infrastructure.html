@@ -11,8 +11,8 @@
   :root{
     --bg:#0b0b0d;
     --bg-deep:#040404;
-    --pink:#ff2f6e;
-    --pink-soft:rgba(255,47,110,0.4);
+    --pink:#ff96a1;
+    --pink-soft:rgba(255,150,161,0.4);
     --purple:#9b5de0;
     --purple-soft:rgba(155,93,224,0.4);
     --yellow:#f5e63e;
@@ -300,6 +300,7 @@
       </g>
     </svg>
     <div class="zoom-controls">
+      <button id="soundToggle" class="reset" title="Toggle drum hit sounds">🔇</button>
       <button id="zoomIn" title="Zoom in">+</button>
       <button id="zoomOut" title="Zoom out">−</button>
       <button id="zoomReset" class="reset" title="Reset view">⟲</button>
@@ -354,6 +355,74 @@
 
     {id:"internalapps", cx:1000, cy:1150, r:84, row:"apps", shape:"cymbal", tag:"Apps · PRD", title:"Internal Web Apps", subtitle:["PropertyGuru","Building Selection","Key Layers"]}
   ];
+
+  // ---------- node id -> shape lookup, for hit sounds ----------
+  const NODE_SHAPE = {};
+  NODES.forEach(n => { NODE_SHAPE[n.id] = n.shape === 'cymbal' ? 'cymbal' : 'drum'; });
+
+  // ---------- synthesized drum/cymbal hit sounds (no audio files) ----------
+  let soundOn = false;
+  let audioCtx = null;
+  let lastHitTime = 0;
+
+  function ensureAudio(){
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(!AC) return null;
+      audioCtx = new AC();
+    }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playDrum(){
+    if(!soundOn) return;
+    const now = performance.now();
+    if(now - lastHitTime < 90) return;
+    lastHitTime = now;
+    const ctx = ensureAudio();
+    if(!ctx) return;
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(170, t);
+    osc.frequency.exponentialRampToValueAtTime(52, t + 0.13);
+    gain.gain.setValueAtTime(0.32, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.19);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(t); osc.stop(t + 0.2);
+  }
+
+  function playCymbal(){
+    if(!soundOn) return;
+    const now = performance.now();
+    if(now - lastHitTime < 90) return;
+    lastHitTime = now;
+    const ctx = ensureAudio();
+    if(!ctx) return;
+    const t = ctx.currentTime;
+    const bufferSize = Math.floor(ctx.sampleRate * 0.35);
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for(let i = 0; i < bufferSize; i++){
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 2);
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = 4200;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.16, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
+    noise.connect(filter); filter.connect(gain); gain.connect(ctx.destination);
+    noise.start(t); noise.stop(t + 0.35);
+  }
+
+  function playHitFor(nodeId){
+    if(NODE_SHAPE[nodeId] === 'cymbal') playCymbal(); else playDrum();
+  }
 
   // ---------- Connectors ----------
   const EDGES = [
@@ -510,9 +579,11 @@
     }
 
     const dot = el('circle', { r: isPromo ? 4.6 : 4.4, class: 'flow-dot' + (isPromo ? ' promo-dot' : '') });
+    const durVal = isPromo ? 6 : (2 + Math.random()*2.2);
+    const beginVal = Math.random()*1.2;
     const anim = el('animateMotion', {
-      dur: isPromo ? '6s' : (2 + Math.random()*2.2).toFixed(1) + 's',
-      begin: (Math.random()*1.2).toFixed(1) + 's',
+      dur: durVal.toFixed(1) + 's',
+      begin: beginVal.toFixed(1) + 's',
       repeatCount: 'indefinite',
       rotate: 'auto'
     });
@@ -523,12 +594,20 @@
     dot.appendChild(anim);
     connectorsG.appendChild(dot);
 
+    // forward dot "hits" the target node at the end of every cycle
+    setTimeout(function(){
+      playHitFor(edge.to);
+      setInterval(() => playHitFor(edge.to), durVal * 1000);
+    }, (beginVal + durVal) * 1000);
+
     // reverse "request" dot — traffic heading back upstream (skip on scheduled promotion lines)
     if(!isPromo){
+      const reqDurVal = 2.6 + Math.random()*2.4;
+      const reqBeginVal = Math.random()*1.6;
       const reqDot = el('circle', { r: 3.6, class: 'flow-dot request-dot' });
       const reqAnim = el('animateMotion', {
-        dur: (2.6 + Math.random()*2.4).toFixed(1) + 's',
-        begin: (Math.random()*1.6).toFixed(1) + 's',
+        dur: reqDurVal.toFixed(1) + 's',
+        begin: reqBeginVal.toFixed(1) + 's',
         repeatCount: 'indefinite',
         rotate: 'auto',
         keyPoints: '1;0',
@@ -540,6 +619,12 @@
       reqAnim.appendChild(reqMpath);
       reqDot.appendChild(reqAnim);
       connectorsG.appendChild(reqDot);
+
+      // reverse dot "hits" the source node at the end of every cycle
+      setTimeout(function(){
+        playHitFor(edge.from);
+        setInterval(() => playHitFor(edge.from), reqDurVal * 1000);
+      }, (reqBeginVal + reqDurVal) * 1000);
     }
   });
 
@@ -734,6 +819,14 @@
   document.getElementById('zoomReset').addEventListener('click', () => {
     panX = 0; panY = 0; scale = 1;
     applyTransform();
+  });
+
+  const soundBtn = document.getElementById('soundToggle');
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? '🔊' : '🔇';
+    soundBtn.title = soundOn ? 'Mute drum hit sounds' : 'Turn on drum hit sounds';
+    if(soundOn) ensureAudio();
   });
 </script>
 
