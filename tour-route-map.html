@@ -169,7 +169,6 @@
   .end-msg{font-size:13px; color:var(--muted); line-height:1.7; font-weight:600;}
   .end-msg strong{color:var(--ink);}
 
-  #ticketLog{ max-height:340px; overflow-y:auto; }
   #optionsList{ max-height:340px; overflow-y:auto; padding-right:4px; }
   .stub{
     border-top:2px dashed var(--line); padding:10px 2px; margin-top:8px;
@@ -353,12 +352,6 @@
       <div class="panel" id="optionsPanel">
         <h2>Next stop</h2>
         <div id="optionsList"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Setlist &amp; ledger</h2>
-        <div id="ticketLog"><p class="empty-log">No shows booked yet.</p></div>
-        <button class="btn btn-acid export-btn" id="exportBtn" disabled>Export setlist (CSV)</button>
       </div>
 
       <button class="btn btn-ghost" id="undoBtn" disabled>Undo last stop</button>
@@ -582,28 +575,6 @@ function renderOptions(){
   });
 }
 
-function addTicketStub(entry){
-  const log = document.getElementById('ticketLog');
-  const empty = log.querySelector('.empty-log');
-  if (empty) empty.remove();
-
-  const stub = document.createElement('div');
-  stub.className = 'stub';
-  const netClass = entry.net >= 0 ? 'pos' : 'neg';
-  const netSign = entry.net >= 0 ? '+' : '-';
-
-  const routeLine = entry.from
-    ? entry.from.split(',')[0] + ' &rarr; ' + entry.to.split(',')[0]
-    : entry.to.split(',')[0] + ' (opener)';
-
-  stub.innerHTML =
-    '<div class="route"><span>' + routeLine + '</span><span>' + formatShowDate(entry.date) + '</span></div>' +
-    (entry.miles ? '<div class="row"><span>' + Math.round(entry.miles).toLocaleString() + ' mi drive</span><span>-' + fmtMoney(entry.travelCost) + '</span></div>' : '') +
-    '<div class="row"><span>Show payout</span><span>+' + fmtMoney(entry.payout) + '</span></div>' +
-    '<span class="net ' + netClass + '">' + netSign + fmtMoney(Math.abs(entry.net)) + ' net</span>';
-  log.prepend(stub);
-}
-
 function selectCity(name, miles, travelCost, payout){
   drawLeg(currentCity, name);
   placeCity(name);
@@ -623,7 +594,6 @@ function selectCity(name, miles, travelCost, payout){
     runningBudget: budget, date: new Date(currentShowDate.getTime()), dayGap
   };
   legLog.push(entry);
-  addTicketStub(entry);
 
   currentCity = name;
   visited.push(name);
@@ -635,7 +605,6 @@ function selectCity(name, miles, travelCost, payout){
   renderStatus();
   renderOptions();
   refreshShirtContent();
-  document.getElementById('exportBtn').disabled = false;
   updateUndoButtonState();
   if (wentOverBudget) showGuiWarning();
 }
@@ -661,13 +630,6 @@ function undoLastStop(){
   if (lastLine) map.removeLayer(lastLine);
   const lastMarker = cityMarkers.pop();
   if (lastMarker) map.removeLayer(lastMarker);
-
-  const log = document.getElementById('ticketLog');
-  const mostRecentStub = log.querySelector('.stub');
-  if (mostRecentStub) mostRecentStub.remove();
-  if (!log.querySelector('.stub')) {
-    log.innerHTML = '<p class="empty-log">No shows booked yet.</p>';
-  }
 
   const bounds = visited.map(c => [CITIES[c].lat, CITIES[c].lng]);
   if (bounds.length === 1) {
@@ -737,9 +699,6 @@ function startTour(){
   const entry = { leg: 0, from: null, to: START_CITY, miles: 0, travelCost: 0, payout: openerPayout, net: openerPayout, runningBudget: budget, date: new Date(currentShowDate.getTime()) };
   legLog.push(entry);
 
-  document.getElementById('ticketLog').innerHTML = '';
-  addTicketStub(entry);
-  document.getElementById('exportBtn').disabled = false;
   updateUndoButtonState();
 
   renderBoard();
@@ -804,7 +763,6 @@ document.getElementById('addFundsInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') addFunds();
 });
 
-document.getElementById('exportBtn').addEventListener('click', exportCSV);
 document.getElementById('shirtDownloadBtn').addEventListener('click', downloadShirt);
 document.getElementById('guiDismissBtn').addEventListener('click', () => {
   document.getElementById('guiModal').classList.add('hidden');
