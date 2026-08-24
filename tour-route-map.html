@@ -33,7 +33,7 @@
     background-size: 4px 4px;
   }
 
-  .app{max-width:1200px; margin:0 auto; padding:140px 18px 60px;}
+  .app{max-width:1200px; margin:0 auto; padding:96px 18px 60px;}
 
   header{margin-bottom:22px;}
   .flag{
@@ -61,15 +61,15 @@
     box-shadow: 0 6px 0 rgba(0,0,0,.35);
   }
   .fund-adjust{
-    display:flex; gap:8px; max-width:1164px; margin:8px auto 0; align-items:center;
+    display:flex; gap:8px; align-items:center;
   }
   .fund-adjust input{
     background:#fff; border:2px solid var(--line); border-radius:0;
     color:var(--ink); font-family:'JetBrains Mono',monospace; font-weight:700;
-    font-size:13px; padding:7px 10px; width:130px;
+    font-size:13px; padding:9px 10px; flex:1; min-width:0;
   }
   .fund-adjust input:focus{border-color:var(--hot); outline:none;}
-  .fund-adjust .btn{padding:8px 16px; font-size:13px;}
+  .fund-adjust .btn{padding:9px 16px; font-size:13px; flex-shrink:0;}
   .board{
     display:grid; grid-template-columns:repeat(3,1fr); gap:2px;
     background:var(--line); border:3px solid var(--line);
@@ -311,10 +311,6 @@
       <div class="val" id="earnedReadout">$0</div>
     </div>
   </div>
-  <div class="fund-adjust">
-    <input type="number" id="addFundsInput" placeholder="Amount ($)" step="100">
-    <button class="btn btn-acid" id="addFundsBtn">Add funds</button>
-  </div>
 </div>
 <div class="app">
 
@@ -344,6 +340,11 @@
         <h2>Now playing</h2>
         <p class="current-city" id="currentCityName">Seattle, WA</p>
         <p class="current-sub" id="legCount">Leg 0 &middot; 0 stops so far</p>
+      </div>
+
+      <div class="fund-adjust">
+        <input type="number" id="addFundsInput" placeholder="Amount ($)" step="100">
+        <button class="btn btn-acid" id="addFundsBtn">Add funds</button>
       </div>
 
       <div class="panel" id="optionsPanel">
