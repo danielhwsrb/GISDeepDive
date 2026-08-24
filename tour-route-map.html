@@ -33,7 +33,7 @@
     background-size: 4px 4px;
   }
 
-  .app{max-width:1200px; margin:0 auto; padding:96px 18px 60px;}
+  .app{max-width:1200px; margin:0 auto; padding:140px 18px 60px;}
 
   header{margin-bottom:22px;}
   .flag{
@@ -60,6 +60,16 @@
     background:var(--ink); padding:10px 18px;
     box-shadow: 0 6px 0 rgba(0,0,0,.35);
   }
+  .fund-adjust{
+    display:flex; gap:8px; max-width:1164px; margin:8px auto 0; align-items:center;
+  }
+  .fund-adjust input{
+    background:#fff; border:2px solid var(--line); border-radius:0;
+    color:var(--ink); font-family:'JetBrains Mono',monospace; font-weight:700;
+    font-size:13px; padding:7px 10px; width:130px;
+  }
+  .fund-adjust input:focus{border-color:var(--hot); outline:none;}
+  .fund-adjust .btn{padding:8px 16px; font-size:13px;}
   .board{
     display:grid; grid-template-columns:repeat(3,1fr); gap:2px;
     background:var(--line); border:3px solid var(--line);
@@ -300,6 +310,10 @@
       <div class="label">Earned from shows</div>
       <div class="val" id="earnedReadout">$0</div>
     </div>
+  </div>
+  <div class="fund-adjust">
+    <input type="number" id="addFundsInput" placeholder="Amount ($)" step="100">
+    <button class="btn btn-acid" id="addFundsBtn">Add funds</button>
   </div>
 </div>
 <div class="app">
@@ -771,6 +785,22 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   startTour();
   placeCity(START_CITY);
   map.setView([CITIES[START_CITY].lat, CITIES[START_CITY].lng], 5);
+});
+
+function addFunds(){
+  const input = document.getElementById('addFundsInput');
+  const amount = parseFloat(input.value);
+  if (!isNaN(amount) && amount !== 0){
+    budget += amount;
+    renderBoard();
+    renderOptions();
+    input.value = '';
+  }
+}
+
+document.getElementById('addFundsBtn').addEventListener('click', addFunds);
+document.getElementById('addFundsInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addFunds();
 });
 
 document.getElementById('exportBtn').addEventListener('click', exportCSV);
