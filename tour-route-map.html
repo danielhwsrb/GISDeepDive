@@ -170,6 +170,7 @@
   .end-msg strong{color:var(--ink);}
 
   #ticketLog{ max-height:340px; overflow-y:auto; }
+  #optionsList{ max-height:340px; overflow-y:auto; padding-right:4px; }
   .stub{
     border-top:2px dashed var(--line); padding:10px 2px; margin-top:8px;
     font-size:11.5px; animation: stub-in .3s ease;
@@ -556,7 +557,7 @@ function renderOptions(){
   list.innerHTML = '';
   const neighbors = Object.keys(CITIES)
     .filter(n => !visited.includes(n))
-    .sort((a, b) => haversineMiles(CITIES[currentCity], CITIES[a]) - haversineMiles(CITIES[currentCity], CITIES[b]));
+    .sort((a, b) => a.localeCompare(b));
 
   if (neighbors.length === 0){
     list.innerHTML = "<p class=\"end-msg\">You've played every city on the map.<br><br>Tour's over &mdash; " + visited.length + " shows, " + fmtMoney(budget) + " in the fund.</p>";
