@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Polymeter Grid — Linear Rhythm Notation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #eef3f6;
+    --paper-line: #c7d6e0;
+    --ink: #1f2a33;
+    --ink-soft: #5b6b75;
+    --edge: #1f2a33;
+    --accent: #d64550;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px),
+      var(--paper);
+    background-size: 24px 24px, 24px 24px, auto;
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--ink);
+    padding: 40px 5vw 80px;
+  }
+
+  header{
+    max-width: 1200px;
+    margin: 0 auto 36px;
+  }
+
+  h1{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size: clamp(22px, 2.6vw, 32px);
+    letter-spacing:-0.01em;
+    margin: 0 0 6px;
+  }
+
+  header p{
+    margin:0;
+    color: var(--ink-soft);
+    font-size:14px;
+    max-width:640px;
+    line-height:1.5;
+  }
+
+  .sheet{
+    max-width:1200px;
+    margin: 0 auto;
+    background: rgba(255,255,255,0.55);
+    border: 1.5px solid var(--edge);
+    box-shadow: 4px 4px 0 rgba(31,42,51,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .playhead{
+    position:absolute;
+    top:0; bottom:0; left:0;
+    width:2px;
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(214,69,80,0.7);
+    pointer-events:none;
+    display:none;
+    z-index:5;
+  }
+  .playhead.active{ display:block; }
+
+  .cell.playing{
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+  .cell.playing .marker{
+    transform: scale(1.35);
+  }
+
+  .row{
+    display:flex;
+    align-items:stretch;
+    border-bottom: 1.5px solid var(--edge);
+  }
+  .row:last-child{ border-bottom:none; }
+
+  .row-label{
+    flex: 0 0 64px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:20px;
+    color: var(--row-color);
+    background: rgba(255,255,255,0.6);
+    border-right: 1.5px solid var(--edge);
+    gap:2px;
+  }
+  .row-label span{
+    font-size:9px;
+    font-weight:500;
+    letter-spacing:0.08em;
+    color: var(--ink-soft);
+    text-transform:uppercase;
+  }
+
+  .cells{
+    flex:1;
+    display:flex;
+    min-height: 64px;
+  }
+
+  .cell{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-right: 1px solid var(--edge);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color: var(--ink-soft);
+    position:relative;
+    cursor:pointer;
+    background: color-mix(in srgb, var(--row-color) 8%, white);
+    transition: background 0.12s ease;
+  }
+  .cell:last-child{ border-right:none; }
+
+  .cell:hover{
+    background: color-mix(in srgb, var(--row-color) 16%, white);
+  }
+
+  .cell.hit{
+    background: color-mix(in srgb, var(--row-color) 30%, white);
+  }
+
+  .cell::after{
+    content:"";
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:3px;
+    background: var(--row-color);
+  }
+
+  .beat-num{
+    position:absolute;
+    top:4px; left:8px;
+    font-size:9px;
+    opacity:0.55;
+  }
+
+  .marker{
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    background: var(--row-color);
+    opacity:0;
+    transform: scale(0.4);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--row-color) 35%, white);
+  }
+
+  .cell.hit .marker{
+    opacity:1;
+    transform: scale(1);
+  }
+
+  .row.muted{
+    opacity: 0.32;
+  }
+  .row.muted .cell{
+    cursor: not-allowed;
+  }
+
+  .row-toggle{
+    width:26px;
+    height:14px;
+    border-radius:8px;
+    background: var(--row-color);
+    position:relative;
+    cursor:pointer;
+    margin-top:2px;
+  }
+  .row-toggle::after{
+    content:"";
+    position:absolute;
+    top:2px; left:2px;
+    width:10px; height:10px;
+    border-radius:50%;
+    background:#fff;
+    transition: left 0.14s ease;
+  }
+  .row.muted .row-toggle{
+    background: #c7cdd2;
+  }
+  .row.muted .row-toggle::after{
+    left:14px;
+  }
+
+  .remove-row{
+    position:absolute;
+    top:4px; right:4px;
+    width:16px; height:16px;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    color:#fff;
+    background: var(--ink-soft);
+    border-radius:50%;
+    cursor:pointer;
+  }
+  .row:hover .remove-row{ display:flex; }
+
+  .toolbar{
+    max-width:1200px;
+    margin: 20px auto 0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+  }
+  .toolbar input{
+    width:64px;
+    padding:8px 10px;
+    border:1.5px solid var(--edge);
+    background:#fff;
+    font-family:inherit;
+    font-size:13px;
+  }
+  .toolbar button{
+    padding:8px 14px;
+    border:1.5px solid var(--edge);
+    background: var(--ink);
+    color:#fff;
+    font-family:inherit;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .toolbar button:hover{ background:#000; }
+  .toolbar button.secondary{
+    background:#fff;
+    color: var(--ink);
+  }
+  .toolbar button.secondary:hover{ background:#f2f2f2; }
+
+  footer{
+    max-width:1200px;
+    margin: 14px auto 0;
+    font-size:12px;
+    color: var(--ink-soft);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Polymeter Grid</h1>
+  <p>Each row spans the same length but is divided into a different number of equal parts. Read down a vertical slice to see how the divisions of 2, 3, 5 and 7 fall against each other.</p>
+</header>
+
+<div class="sheet" id="sheet">
+  <div class="playhead" id="playhead"></div>
+</div>
+
+<div class="toolbar">
+  <button id="playBtn">▶ Play</button>
+  <span>tempo</span>
+  <input type="range" id="bpmSlider" min="30" max="300" step="1" value="120">
+  <input type="number" id="bpmInput" min="30" max="300" step="1" value="120" style="width:56px;">
+  <span>bpm</span>
+  <span>beats / cycle</span>
+  <input type="number" id="beatsInput" min="1" max="32" step="1" value="4" style="width:48px;">
+  <span style="width:1px;height:20px;background:var(--edge);display:inline-block;margin:0 4px;"></span>
+  <span>divide next row into</span>
+  <input type="number" id="divInput" min="1" max="64" value="11">
+  <button id="addRowBtn">Add row</button>
+  <button class="secondary" id="resetBtn">Reset to 2·3·5·7</button>
+</div>
+
+<footer>Click a cell to place a hit. The switch next to each row's division number mutes that line without deleting it. Press play — the line sweeps left to right once per cycle, and every row's hits land against the same shared timeline.</footer>
+
+<script>
+  const sheet = document.getElementById('sheet');
+  const defaultDivisions = [2, 3, 5, 7];
+  let rowCount = 0;
+
+  function colorForIndex(i){
+    // deterministic, well-spaced hues, avoiding near-duplicates
+    const hue = (i * 63.8) % 360;
+    return `hsl(${hue}, 62%, 42%)`;
+  }
+
+  function addRow(n){
+    const row = document.createElement('div');
+    row.className = 'row';
+    const color = colorForIndex(rowCount);
+    row.style.setProperty('--row-color', color);
+    rowCount++;
+
+    const label = document.createElement('div');
+    label.className = 'row-label';
+    label.style.position = 'relative';
+    label.innerHTML = `${n}<span>÷</span>`;
+
+    const toggle = document.createElement('div');
+    toggle.className = 'row-toggle';
+    toggle.title = 'Mute this line';
+    toggle.onclick = () => row.classList.toggle('muted');
+    label.appendChild(toggle);
+
+    const remove = document.createElement('div');
+    remove.className = 'remove-row';
+    remove.textContent = '×';
+    remove.onclick = () => row.remove();
+    label.appendChild(remove);
+
+    const cells = document.createElement('div');
+    cells.className = 'cells';
+    for (let i = 0; i < n; i++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+
+      const num = document.createElement('span');
+      num.className = 'beat-num';
+      num.textContent = i + 1;
+
+      const marker = document.createElement('span');
+      marker.className = 'marker';
+
+      cell.appendChild(num);
+      cell.appendChild(marker);
+      cell.onclick = () => cell.classList.toggle('hit');
+      cells.appendChild(cell);
+    }
+
+    row.appendChild(label);
+    row.appendChild(cells);
+    sheet.appendChild(row);
+  }
+
+  function reset(){
+    sheet.innerHTML = '';
+    rowCount = 0;
+    defaultDivisions.forEach(addRow);
+  }
+
+  document.getElementById('addRowBtn').onclick = () => {
+    const n = parseInt(document.getElementById('divInput').value, 10);
+    if (n > 0) addRow(n);
+  };
+  document.getElementById('resetBtn').onclick = reset;
+
+  reset();
+
+  // ---------- Playback ----------
+  const playhead = document.getElementById('playhead');
+  const playBtn = document.getElementById('playBtn');
+  const bpmSlider = document.getElementById('bpmSlider');
+  const bpmInput = document.getElementById('bpmInput');
+  const beatsInput = document.getElementById('beatsInput');
+
+  bpmSlider.oninput = () => { bpmInput.value = bpmSlider.value; };
+  bpmInput.oninput = () => {
+    let v = Math.min(300, Math.max(30, parseInt(bpmInput.value, 10) || 120));
+    bpmSlider.value = v;
+  };
+
+  function getCycleLength(){
+    const bpm = Math.min(300, Math.max(30, parseFloat(bpmInput.value) || 120));
+    const beats = Math.max(1, parseFloat(beatsInput.value) || 4);
+    return (60 / bpm) * beats;
+  }
+
+  let audioCtx = null;
+  let isPlaying = false;
+  let nextLoopTime = 0;   // AudioContext time the next loop iteration starts
+  let anchorTime = 0;     // AudioContext time of the very first loop start, for playhead math
+  let schedulerTimer = null;
+  let rafId = null;
+
+  const LOOKAHEAD_MS = 25;
+  const SCHEDULE_AHEAD = 0.15; // seconds
+
+  function pitchForRowIndex(i){
+    // spread rows across distinct, non-muddy pitches
+    return 220 * Math.pow(2, (i * 4) / 12);
+  }
+
+  function playNote(freq, time){
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, time);
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.exponentialRampToValueAtTime(0.35, time + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.22);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(time);
+    osc.stop(time + 0.25);
+  }
+
+  function flashCell(cell, delayMs){
+    setTimeout(() => {
+      cell.classList.add('playing');
+      setTimeout(() => cell.classList.remove('playing'), 130);
+    }, Math.max(0, delayMs));
+  }
+
+  function scheduleLoop(loopStart){
+    const cycleLen = getCycleLength();
+    const rows = sheet.querySelectorAll('.row');
+    rows.forEach((row, rowIndex) => {
+      if (row.classList.contains('muted')) return;
+      const cells = row.querySelectorAll('.cell');
+      const n = cells.length;
+      const freq = pitchForRowIndex(rowIndex);
+      cells.forEach((cell, i) => {
+        if (!cell.classList.contains('hit')) return;
+        const t = loopStart + ((i + 0.5) / n) * cycleLen;
+        playNote(freq, t);
+        const delayMs = (t - audioCtx.currentTime) * 1000;
+        flashCell(cell, delayMs);
+      });
+    });
+  }
+
+  function scheduler(){
+    const cycleLen = getCycleLength();
+    while (nextLoopTime < audioCtx.currentTime + SCHEDULE_AHEAD){
+      scheduleLoop(nextLoopTime);
+      nextLoopTime += cycleLen;
+    }
+  }
+
+  function updatePlayhead(){
+    if (!isPlaying) return;
+    const cycleLen = getCycleLength();
+    const elapsed = (audioCtx.currentTime - anchorTime) % cycleLen;
+    const pct = elapsed / cycleLen;
+    const sheetWidth = sheet.clientWidth;
+    playhead.style.transform = `translateX(${pct * sheetWidth}px)`;
+    rafId = requestAnimationFrame(updatePlayhead);
+  }
+
+  function startPlayback(){
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    isPlaying = true;
+    anchorTime = audioCtx.currentTime + 0.05;
+    nextLoopTime = anchorTime;
+    scheduler();
+    schedulerTimer = setInterval(scheduler, LOOKAHEAD_MS);
+
+    playhead.classList.add('active');
+    updatePlayhead();
+    playBtn.textContent = '■ Stop';
+  }
+
+  function stopPlayback(){
+    isPlaying = false;
+    clearInterval(schedulerTimer);
+    cancelAnimationFrame(rafId);
+    playhead.classList.remove('active');
+    playhead.style.transform = 'translateX(0px)';
+    sheet.querySelectorAll('.cell.playing').forEach(c => c.classList.remove('playing'));
+    playBtn.textContent = '▶ Play';
+  }
+
+  playBtn.onclick = () => {
+    if (isPlaying) stopPlayback();
+    else startPlayback();
+  };
+</script>
+
+</body>
+</html>
